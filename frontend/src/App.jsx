@@ -1,0 +1,55 @@
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { AuthProvider, useAuth } from './context/AuthContext'
+import Navbar from './components/Navbar'
+import Footer from './components/Footer'
+import Home from './pages/Home'
+import Menu from './pages/Menu'
+import Cart from './pages/Cart'
+import Checkout from './pages/Checkout'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import Account from './pages/Account'
+import Reservation from './pages/Reservation'
+import Dashboard from './pages/admin/Dashboard'
+import ManageMenu from './pages/admin/ManageMenu'
+import Orders from './pages/admin/Orders'
+import Clients from './pages/admin/Clients'
+import Reservations from './pages/admin/Reservations'
+
+// Redirige vers /connexion si pas connecté, en mémorisant la page voulue
+function ProtectedRoute({ children }) {
+  const { isLoggedIn } = useAuth()
+  const location = useLocation()
+  if (!isLoggedIn) return <Navigate to="/connexion" state={{ from: location.pathname }} replace />
+  return children
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Navbar />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/panier" element={<Cart />} />
+          <Route path="/connexion" element={<Login />} />
+          <Route path="/inscription" element={<Register />} />
+
+          {/* Pages nécessitant d'être connecté */}
+          <Route path="/commander" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+          <Route path="/reservation" element={<ProtectedRoute><Reservation /></ProtectedRoute>} />
+          <Route path="/mon-compte" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+
+          {/* Pages admin */}
+          <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/admin/menu" element={<ProtectedRoute><ManageMenu /></ProtectedRoute>} />
+          <Route path="/admin/commandes" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+          <Route path="/admin/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
+          <Route path="/admin/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
+        </Routes>
+        <Footer />
+      </AuthProvider>
+    </BrowserRouter>
+  )
+}

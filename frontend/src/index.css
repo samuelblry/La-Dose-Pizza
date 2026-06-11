@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Lostar';
+  src: url('/fonts/Lostar.ttf') format('truetype');
+  font-display: swap;
+}
+
+body {
+  @apply bg-dark font-poppins text-creme;
+}
+
+/* monogramme LsD recoloré depuis le svg blanc */
+.logo-court {
+  -webkit-mask: url('/img/logo/logo_court.svg') center / contain no-repeat;
+  mask: url('/img/logo/logo_court.svg') center / contain no-repeat;
+  background-color: #B43024;
+}
