@@ -1,19 +1,30 @@
-// Page connexion — POST /api/auth/login/
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { apiLogin } from '../services/api'
 
 export default function Login() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  // Redirige vers la page voulue après login (ex: /commander, /reservation)
   const redirectTo = location.state?.from || '/'
+  const [erreur, setErreur] = useState('')
+  const [chargement, setChargement] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // TODO William : appel POST /api/auth/login/ → récupérer le token puis :
-    // login(token)
-    // navigate(redirectTo)
+    setErreur('')
+    setChargement(true)
+    const form = new FormData(e.target)
+    try {
+      const data = await apiLogin(form.get('email'), form.get('password'))
+      login(data.token, data.refresh, data.is_admin)
+      navigate(data.is_admin ? '/admin' : redirectTo)
+    } catch (err) {
+      setErreur(err?.error || 'Identifiants incorrects')
+    } finally {
+      setChargement(false)
+    }
   }
 
   return (
@@ -21,29 +32,31 @@ export default function Login() {
       <div className="bg-[#2a0400] rounded-2xl p-8 w-full max-w-md">
         <h1 className="font-lostar text-rouge text-3xl mb-6 text-center">Connexion</h1>
 
+        {erreur && (
+          <p className="text-red-400 text-sm text-center mb-4">{erreur}</p>
+        )}
+
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {/* envoyé comme "email" → vérifié dans user_account */}
           <input
             type="email"
             name="email"
             placeholder="Adresse e-mail"
+            required
             className="w-full bg-dark border border-rouge/30 rounded-lg px-4 py-3 text-creme placeholder-creme/40 focus:outline-none focus:border-rouge"
           />
-
-          {/* envoyé comme "password" → comparé au password_hash */}
           <input
             type="password"
             name="password"
             placeholder="Mot de passe"
+            required
             className="w-full bg-dark border border-rouge/30 rounded-lg px-4 py-3 text-creme placeholder-creme/40 focus:outline-none focus:border-rouge"
           />
-
-          {/* POST /api/auth/login/ → retourne token + is_admin pour redirection */}
           <button
             type="submit"
-            className="w-full bg-rouge text-creme font-semibold rounded-lg py-3 mt-2 hover:opacity-90 transition"
+            disabled={chargement}
+            className="w-full bg-rouge text-creme font-semibold rounded-lg py-3 mt-2 hover:opacity-90 transition disabled:opacity-50"
           >
-            Se connecter
+            {chargement ? 'Connexion…' : 'Se connecter'}
           </button>
         </form>
 
