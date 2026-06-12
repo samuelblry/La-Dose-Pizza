@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 
 function BurgerIcon() {
   return (
@@ -16,6 +17,7 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
   const { isLoggedIn, logout } = useAuth()
+  const { count } = useCart()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -78,7 +80,7 @@ export default function Navbar() {
             </button>
 
             <NavLink to="/menu" onClick={() => setOpen(false)}>La carte</NavLink>
-            <NavLink to="/panier" onClick={() => setOpen(false)}>Mon panier</NavLink>
+            <NavLink to="/panier" onClick={() => setOpen(false)} badge={count}>Mon panier</NavLink>
 
             {isLoggedIn ? (
               <>
@@ -104,14 +106,19 @@ export default function Navbar() {
   )
 }
 
-function NavLink({ to, onClick, children }) {
+function NavLink({ to, onClick, children, badge }) {
   return (
     <Link
       to={to}
       onClick={onClick}
-      className="font-poppins text-base text-creme py-3 border-b border-creme/10 hover:text-ambre transition-colors"
+      className="flex items-center justify-between font-poppins text-base text-creme py-3 border-b border-creme/10 hover:text-ambre transition-colors"
     >
-      {children}
+      <span>{children}</span>
+      {badge > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rouge px-1.5 font-poppins text-[0.65rem] font-semibold text-creme">
+          {badge}
+        </span>
+      )}
     </Link>
   )
 }

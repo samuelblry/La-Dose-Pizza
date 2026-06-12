@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { CartProvider } from './context/CartContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CartProvider>
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
@@ -49,6 +51,7 @@ export default function App() {
           <Route path="/admin/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
         </Routes>
         <Footer />
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   )

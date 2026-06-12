@@ -41,6 +41,39 @@ export async function apiMe(token) {
   return res.json()
 }
 
+// Modifie email / téléphone / adresse — PATCH /users/me/
+export async function apiUpdateMe(token, payload) {
+  const res = await fetch(`${BASE}/users/me/`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify(payload),
+  })
+  const data = await res.json()
+  if (!res.ok) throw data
+  return data
+}
+
+// Change le mot de passe — PATCH /users/me/password/
+export async function apiChangePassword(token, payload) {
+  const res = await fetch(`${BASE}/users/me/password/`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify(payload),
+  })
+  const data = await res.json()
+  if (!res.ok) throw data
+  return data
+}
+
+// Supprime le compte — DELETE /users/me/
+export async function apiDeleteMe(token) {
+  const res = await fetch(`${BASE}/users/me/`, {
+    method: 'DELETE',
+    headers: headers(token),
+  })
+  if (!res.ok) throw await res.json()
+}
+
 export async function apiPizzas(token) {
   const res = await fetch(`${BASE}/menu/pizzas/`, { headers: headers(token) })
   if (!res.ok) throw await res.json()
