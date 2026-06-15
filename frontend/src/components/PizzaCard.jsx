@@ -1,6 +1,5 @@
 import { useCart } from '../context/CartContext'
 
-// Carte d'une pizza — { id_pizza, name, description, base_price, image_url, is_available }
 export default function PizzaCard({ pizza }) {
   const { items, addItem, decItem } = useCart()
   const dispo = pizza.is_available
@@ -21,7 +20,6 @@ export default function PizzaCard({ pizza }) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          // Placeholder tant qu'aucune image n'est fournie par l'API
           <div className="flex h-full w-full items-center justify-center">
             <span className="logo-court block h-12 w-20 opacity-20" />
           </div>

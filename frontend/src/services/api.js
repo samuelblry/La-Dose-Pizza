@@ -5,11 +5,11 @@ const headers = (token) => ({
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 })
 
-export async function apiRegister(email, password, phone) {
+export async function apiRegister(payload) {
   const res = await fetch(`${BASE}/auth/register/`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ email, password, phone }),
+    body: JSON.stringify(payload),
   })
   const data = await res.json()
   if (!res.ok) throw data
@@ -164,10 +164,15 @@ export async function apiAdminPizzas(token) {
 }
 
 export async function apiAdminCreatePizza(token, payload) {
+  const isFormData = payload instanceof FormData;
+  const reqHeaders = headers(token);
+  if (isFormData) {
+    delete reqHeaders['Content-Type'];
+  }
   const res = await fetch(`${BASE}/menu/pizzas/`, {
     method: 'POST',
-    headers: headers(token),
-    body: JSON.stringify(payload),
+    headers: reqHeaders,
+    body: isFormData ? payload : JSON.stringify(payload),
   })
   const data = await res.json()
   if (!res.ok) throw data

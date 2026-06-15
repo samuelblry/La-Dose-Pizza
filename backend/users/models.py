@@ -21,6 +21,8 @@ class UserAccountManager(BaseUserManager):
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=100, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=50, blank=True)
     loyalty_points = models.IntegerField(default=0)
     is_admin = models.BooleanField(default=False)

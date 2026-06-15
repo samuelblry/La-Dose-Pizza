@@ -84,18 +84,18 @@ export default function Menu() {
   return (
     <main className="min-h-screen bg-dark pb-32">
       {/* En-tête */}
-      <header className="px-6 pt-24 text-center">
+      <header className="px-6 pt-24 text-center lg:pt-32">
         <p className="mb-2 font-poppins text-[0.62rem] uppercase tracking-[0.3em] text-ambre">
           Pizzeria artisanale
         </p>
-        <h1 className="font-lostar text-[2.6rem] leading-none text-rouge">Notre Carte</h1>
-        <p className="mx-auto mt-4 max-w-[280px] font-poppins text-[0.82rem] leading-relaxed text-creme/70">
+        <h1 className="font-lostar text-[2.6rem] leading-none text-rouge lg:text-[4rem]">Notre Carte</h1>
+        <p className="mx-auto mt-4 max-w-[280px] font-poppins text-[0.82rem] leading-relaxed text-creme/70 lg:max-w-md lg:text-base">
           Nos pizzas cuites au feu de bois, préparées avec des produits frais.
         </p>
       </header>
 
       {/* Barre de recherche + filtres */}
-      <div className="mt-10 px-5">
+      <div className="mx-auto mt-10 max-w-6xl px-5">
         <div className="relative">
           <svg
             viewBox="0 0 24 24"
@@ -248,7 +248,7 @@ export default function Menu() {
 
       {/* Grille des pizzas */}
       {liste.length > 0 ? (
-        <div className="mt-5 grid grid-cols-2 gap-4 px-5">
+        <div className="mx-auto mt-5 grid max-w-6xl grid-cols-2 gap-4 px-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {liste.map((pizza) => (
             <PizzaCard key={pizza.id_pizza} pizza={pizza} />
           ))}

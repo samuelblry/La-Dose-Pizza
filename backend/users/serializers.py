@@ -7,7 +7,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAccount
-        fields = ['email', 'password', 'phone']
+        fields = ['email', 'password', 'phone', 'first_name', 'last_name']
 
     def create(self, validated_data):
         return UserAccount.objects.create_user(**validated_data)
@@ -24,7 +24,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAccount
-        fields = ['id', 'email', 'phone', 'loyalty_points', 'address']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'loyalty_points', 'address']
 
     def get_address(self, obj):
         adresse = obj.addresses.first()
@@ -38,7 +38,7 @@ class AdminClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAccount
-        fields = ['id', 'email', 'phone', 'loyalty_points', 'address']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'loyalty_points', 'address']
 
     def get_address(self, obj):
         adresse = obj.addresses.first()

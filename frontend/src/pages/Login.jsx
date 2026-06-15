@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { apiLogin } from '../services/api'
+import { AuthLayout, Field, PasswordField, SubmitButton, ErrorBanner, IconMail } from '../components/AuthLayout'
 
 export default function Login() {
   const { login } = useAuth()
@@ -28,43 +29,42 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen bg-dark flex items-center justify-center px-4">
-      <div className="bg-[#2a0400] rounded-2xl p-8 w-full max-w-md">
-        <h1 className="font-lostar text-rouge text-3xl mb-6 text-center">Connexion</h1>
+    <AuthLayout
+      surtitre="Espace client"
+      titre="Connexion"
+      sousTitre="Ravi de vous revoir chez La Dose Pizza"
+    >
+      <ErrorBanner message={erreur} />
 
-        {erreur && (
-          <p className="text-red-400 text-sm text-center mb-4">{erreur}</p>
-        )}
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
+        <Field
+          label="Adresse e-mail"
+          icon={<IconMail />}
+          type="email"
+          name="email"
+          autoComplete="email"
+          placeholder="vous@exemple.fr"
+          required
+        />
+        <PasswordField
+          label="Mot de passe"
+          name="password"
+          autoComplete="current-password"
+          placeholder="••••••••"
+          required
+        />
 
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Adresse e-mail"
-            required
-            className="w-full bg-dark border border-rouge/30 rounded-lg px-4 py-3 text-creme placeholder-creme/40 focus:outline-none focus:border-rouge"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Mot de passe"
-            required
-            className="w-full bg-dark border border-rouge/30 rounded-lg px-4 py-3 text-creme placeholder-creme/40 focus:outline-none focus:border-rouge"
-          />
-          <button
-            type="submit"
-            disabled={chargement}
-            className="w-full bg-rouge text-creme font-semibold rounded-lg py-3 mt-2 hover:opacity-90 transition disabled:opacity-50"
-          >
-            {chargement ? 'Connexion…' : 'Se connecter'}
-          </button>
-        </form>
+        <SubmitButton loading={chargement} loadingLabel="Connexion…">
+          Se connecter
+        </SubmitButton>
+      </form>
 
-        <p className="text-creme/50 text-sm text-center mt-4">
-          Pas encore de compte ?{' '}
-          <a href="/inscription" className="text-ambre hover:underline">S'inscrire</a>
-        </p>
-      </div>
-    </main>
+      <p className="mt-6 text-center font-poppins text-[0.82rem] text-creme/50">
+        Pas encore de compte ?{' '}
+        <Link to="/inscription" className="font-medium text-ambre hover:underline">
+          Créer un compte
+        </Link>
+      </p>
+    </AuthLayout>
   )
 }

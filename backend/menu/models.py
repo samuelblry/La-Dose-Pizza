@@ -5,7 +5,7 @@ class Pizza(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
-    image_url = models.CharField(max_length=255, blank=True)
+    image_url = models.ImageField(upload_to='pizzas/', blank=True, null=True)
     is_available = models.BooleanField(default=True)
 
     def __str__(self):

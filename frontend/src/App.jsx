@@ -25,32 +25,41 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+// Réservé au staff : non connecté → connexion, connecté mais pas admin → accueil
+function AdminRoute({ children }) {
+  const { isLoggedIn, isAdmin } = useAuth()
+  const location = useLocation()
+  if (!isLoggedIn) return <Navigate to="/connexion" state={{ from: location.pathname }} replace />
+  if (!isAdmin) return <Navigate to="/" replace />
+  return children
+}
+
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/panier" element={<Cart />} />
-          <Route path="/connexion" element={<Login />} />
-          <Route path="/inscription" element={<Register />} />
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/panier" element={<Cart />} />
+            <Route path="/connexion" element={<Login />} />
+            <Route path="/inscription" element={<Register />} />
 
-          {/* Pages nécessitant d'être connecté */}
-          <Route path="/commander" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-          <Route path="/reservation" element={<ProtectedRoute><Reservation /></ProtectedRoute>} />
-          <Route path="/mon-compte" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            {/* Pages nécessitant d'être connecté */}
+            <Route path="/commander" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/reservation" element={<ProtectedRoute><Reservation /></ProtectedRoute>} />
+            <Route path="/mon-compte" element={<ProtectedRoute><Account /></ProtectedRoute>} />
 
-          {/* Pages admin */}
-          <Route path="/admin" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/admin/menu" element={<ProtectedRoute><ManageMenu /></ProtectedRoute>} />
-          <Route path="/admin/commandes" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
-          <Route path="/admin/clients" element={<ProtectedRoute><Clients /></ProtectedRoute>} />
-          <Route path="/admin/reservations" element={<ProtectedRoute><Reservations /></ProtectedRoute>} />
-        </Routes>
-        <Footer />
+            {/* Pages admin — réservées au staff */}
+            <Route path="/admin" element={<AdminRoute><Dashboard /></AdminRoute>} />
+            <Route path="/admin/menu" element={<AdminRoute><ManageMenu /></AdminRoute>} />
+            <Route path="/admin/commandes" element={<AdminRoute><Orders /></AdminRoute>} />
+            <Route path="/admin/clients" element={<AdminRoute><Clients /></AdminRoute>} />
+            <Route path="/admin/reservations" element={<AdminRoute><Reservations /></AdminRoute>} />
+          </Routes>
+          <Footer />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

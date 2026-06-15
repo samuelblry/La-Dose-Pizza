@@ -70,7 +70,8 @@ export default function Account() {
   const points = user?.loyalty_points ?? 0
   const reste = Math.max(0, PALIER - (points % PALIER))
   const progress = useMemo(() => ((points % PALIER) / PALIER) * 100, [points])
-  const initiale = (user?.email || '?').charAt(0).toUpperCase()
+  const nomComplet = [user?.first_name, user?.last_name].filter(Boolean).join(' ')
+  const initiale = (user?.first_name || user?.email || '?').charAt(0).toUpperCase()
   const adresse = user?.address
 
   return (
@@ -83,7 +84,7 @@ export default function Account() {
         <h1 className="font-lostar text-[2.6rem] leading-none text-rouge">Mon Compte</h1>
       </header>
 
-      <div className="mx-auto mt-10 flex max-w-lg flex-col gap-5 px-5">
+      <div className="mx-auto mt-10 flex max-w-lg flex-col gap-5 px-5 lg:mt-14 lg:max-w-5xl lg:px-8">
         {erreur && (
           <p className="rounded-2xl border border-rouge/30 bg-rouge/10 px-4 py-3 text-center font-poppins text-[0.8rem] text-rouge">
             {erreur}
@@ -94,18 +95,21 @@ export default function Account() {
           <Skeleton />
         ) : (
           <>
-            {/* Carte fidélité */}
-            <section className="relative overflow-hidden rounded-3xl border border-ambre/20 bg-gradient-to-br from-[#3a0a04] to-[#240400] p-6">
-              <p className="font-poppins text-[0.62rem] uppercase tracking-[0.25em] text-ambre">
-                Points de fidélité
-              </p>
-              <p className="mt-2 font-lostar text-5xl leading-none text-creme">
-                {points}
-                <span className="ml-2 font-poppins text-sm font-medium tracking-widest text-ambre">PTS</span>
-              </p>
+            {/* Carte fidélité — bannière pleine largeur */}
+            <section className="relative overflow-hidden rounded-3xl border border-ambre/20 bg-gradient-to-br from-[#3a0a04] to-[#240400] p-6 lg:flex lg:items-center lg:gap-12 lg:p-8">
+              <span className="logo-court pointer-events-none absolute -right-3 -top-3 block h-20 w-32 rotate-12 opacity-[0.06]" />
+              <div className="relative lg:shrink-0">
+                <p className="font-poppins text-[0.62rem] uppercase tracking-[0.25em] text-ambre">
+                  Points de fidélité
+                </p>
+                <p className="mt-2 font-lostar text-5xl leading-none text-creme lg:text-6xl">
+                  {points}
+                  <span className="ml-2 font-poppins text-sm font-medium tracking-widest text-ambre">PTS</span>
+                </p>
+              </div>
 
               {/* Progression vers le prochain palier */}
-              <div className="mt-5">
+              <div className="relative mt-5 lg:mt-0 lg:flex-1">
                 <div className="h-2 w-full overflow-hidden rounded-full bg-black/30">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-ambre to-rouge transition-all"
@@ -118,6 +122,9 @@ export default function Account() {
               </div>
             </section>
 
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-6">
+              {/* Rail profil */}
+              <aside className="flex flex-col gap-5 lg:sticky lg:top-28 lg:w-80 lg:shrink-0">
             {/* Informations du compte */}
             <section className="rounded-3xl border border-white/10 bg-[#240400] p-6">
               <div className="flex items-center gap-4">
@@ -125,7 +132,9 @@ export default function Account() {
                   {initiale}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-poppins text-sm font-medium text-creme">{user?.email}</p>
+                  <p className="truncate font-poppins text-sm font-medium text-creme">
+                    {nomComplet || user?.email}
+                  </p>
                   <p className="font-poppins text-[0.74rem] text-creme/50">Membre La Dose Pizza</p>
                 </div>
                 {!editInfos && (
@@ -143,6 +152,11 @@ export default function Account() {
 
               {!editInfos ? (
                 <div className="mt-5 space-y-3 border-t border-white/10 pt-5">
+                  <InfoRow
+                    label="Nom complet"
+                    value={nomComplet || '—'}
+                    icon={<path strokeLinecap="round" strokeLinejoin="round" d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z" />}
+                  />
                   <InfoRow
                     label="Email"
                     value={user?.email || '—'}
@@ -203,10 +217,56 @@ export default function Account() {
               )}
             </section>
 
+            {/* Zone dangereuse — suppression du compte */}
+            <section className="rounded-3xl border border-rouge/30 bg-rouge/5 p-6">
+              <p className="font-poppins text-sm font-semibold text-rouge">Supprimer mon compte</p>
+              <p className="mt-1 font-poppins text-[0.74rem] leading-relaxed text-creme/50">
+                Cette action est définitive. Toutes vos données et commandes seront supprimées.
+              </p>
+              {!confirmSuppr ? (
+                <button
+                  onClick={() => setConfirmSuppr(true)}
+                  className="mt-4 rounded-xl border border-rouge/50 px-4 py-2.5 font-poppins text-[0.74rem] font-medium text-rouge transition hover:bg-rouge hover:text-creme"
+                >
+                  Supprimer mon compte
+                </button>
+              ) : (
+                <div className="mt-4 animate-pop motion-reduce:animate-none">
+                  <p className="font-poppins text-[0.78rem] text-creme">Êtes-vous sûr ? Cette action est irréversible.</p>
+                  <div className="mt-3 flex gap-3">
+                    <button
+                      onClick={supprimerCompte}
+                      className="flex-1 rounded-xl bg-rouge py-2.5 font-poppins text-[0.74rem] font-semibold text-creme transition hover:bg-rouge/90"
+                    >
+                      Oui, supprimer
+                    </button>
+                    <button
+                      onClick={() => setConfirmSuppr(false)}
+                      className="flex-1 rounded-xl border border-white/15 py-2.5 font-poppins text-[0.74rem] text-creme/70 transition hover:border-creme hover:text-creme"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Déconnexion */}
+            <button
+              onClick={deconnexion}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 py-3.5 font-poppins text-[0.78rem] font-medium uppercase tracking-[0.1em] text-creme/70 transition hover:border-creme hover:text-creme"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17l5-5-5-5M20 12H9M9 21H6a2 2 0 01-2-2V5a2 2 0 012-2h3" />
+              </svg>
+              Se déconnecter
+            </button>
+              </aside>
+
             {/* Historique des commandes */}
-            <section className="rounded-3xl border border-white/10 bg-[#240400] p-6">
+            <section className="rounded-3xl border border-white/10 bg-[#240400] p-6 lg:min-w-0 lg:flex-1">
               <div className="flex items-center justify-between">
-                <h2 className="font-lostar text-xl text-ambre">Mes commandes</h2>
+                <h2 className="font-poppins text-xl text-ambre">Mes commandes</h2>
                 {orders.length > 0 && (
                   <span className="font-poppins text-[0.68rem] uppercase tracking-[0.15em] text-creme/40">
                     {orders.length} commande{orders.length > 1 ? 's' : ''}
@@ -270,51 +330,8 @@ export default function Account() {
                 </ul>
               )}
             </section>
+            </div>
 
-            {/* Déconnexion */}
-            <button
-              onClick={deconnexion}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-2xl border border-white/15 py-3.5 font-poppins text-[0.78rem] font-medium uppercase tracking-[0.1em] text-creme/70 transition hover:border-creme hover:text-creme"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17l5-5-5-5M20 12H9M9 21H6a2 2 0 01-2-2V5a2 2 0 012-2h3" />
-              </svg>
-              Se déconnecter
-            </button>
-
-            {/* Zone dangereuse — suppression du compte */}
-            <section className="mt-2 rounded-3xl border border-rouge/30 bg-rouge/5 p-6">
-              <p className="font-poppins text-sm font-semibold text-rouge">Supprimer mon compte</p>
-              <p className="mt-1 font-poppins text-[0.74rem] leading-relaxed text-creme/50">
-                Cette action est définitive. Toutes vos données et commandes seront supprimées.
-              </p>
-              {!confirmSuppr ? (
-                <button
-                  onClick={() => setConfirmSuppr(true)}
-                  className="mt-4 rounded-xl border border-rouge/50 px-4 py-2.5 font-poppins text-[0.74rem] font-medium text-rouge transition hover:bg-rouge hover:text-creme"
-                >
-                  Supprimer mon compte
-                </button>
-              ) : (
-                <div className="mt-4 animate-pop motion-reduce:animate-none">
-                  <p className="font-poppins text-[0.78rem] text-creme">Êtes-vous sûr ? Cette action est irréversible.</p>
-                  <div className="mt-3 flex gap-3">
-                    <button
-                      onClick={supprimerCompte}
-                      className="flex-1 rounded-xl bg-rouge py-2.5 font-poppins text-[0.74rem] font-semibold text-creme transition hover:bg-rouge/90"
-                    >
-                      Oui, supprimer
-                    </button>
-                    <button
-                      onClick={() => setConfirmSuppr(false)}
-                      className="flex-1 rounded-xl border border-white/15 py-2.5 font-poppins text-[0.74rem] text-creme/70 transition hover:border-creme hover:text-creme"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
-              )}
-            </section>
           </>
         )}
       </div>
@@ -348,6 +365,8 @@ function FormInfos({ user, token, onCancel, onSaved }) {
     setSaving(true)
     const f = new FormData(e.target)
     const payload = {
+      first_name: f.get('first_name'),
+      last_name: f.get('last_name'),
       email: f.get('email'),
       phone: f.get('phone'),
       street: f.get('street'),
@@ -367,6 +386,10 @@ function FormInfos({ user, token, onCancel, onSaved }) {
   return (
     <form onSubmit={handleSubmit} className="mt-5 animate-pop space-y-4 border-t border-white/10 pt-5 motion-reduce:animate-none">
       {erreur && <p className="font-poppins text-[0.78rem] text-rouge">{erreur}</p>}
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Prénom" name="first_name" defaultValue={user?.first_name} />
+        <Field label="Nom" name="last_name" defaultValue={user?.last_name} />
+      </div>
       <Field label="Email" name="email" type="email" defaultValue={user?.email} required />
       <Field label="Téléphone" name="phone" type="tel" defaultValue={user?.phone} />
       <Field label="Adresse" name="street" defaultValue={adr.street} placeholder="12 rue de la Pizza" />
@@ -470,10 +493,13 @@ function Actions({ saving, onCancel }) {
 
 function Skeleton() {
   return (
-    <div className="animate-pulse space-y-5">
-      <div className="h-40 rounded-3xl bg-[#240400]" />
-      <div className="h-36 rounded-3xl bg-[#240400]" />
-      <div className="h-48 rounded-3xl bg-[#240400]" />
+    <div className="animate-pulse lg:flex lg:items-start lg:gap-6">
+      <div className="space-y-5 lg:w-80 lg:shrink-0">
+        <div className="h-40 rounded-3xl bg-[#240400]" />
+        <div className="h-36 rounded-3xl bg-[#240400]" />
+        <div className="h-24 rounded-3xl bg-[#240400]" />
+      </div>
+      <div className="mt-5 h-80 rounded-3xl bg-[#240400] lg:mt-0 lg:flex-1" />
     </div>
   )
 }
