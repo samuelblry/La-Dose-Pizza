@@ -18,18 +18,23 @@ export default function Checkout() {
   const [erreur, setErreur] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0)
+  const [usePoints, setUsePoints] = useState(0)
 
   // Pré-remplit l'adresse de livraison avec celle du compte
   useEffect(() => {
     let actif = true
     apiMe(token)
       .then((me) => {
-        if (actif && me.address) {
-          setAdresse({
-            street: me.address.street || '',
-            zip_code: me.address.zip_code || '',
-            city: me.address.city || '',
-          })
+        if (actif && me) {
+          if (me.address) {
+            setAdresse({
+              street: me.address.street || '',
+              zip_code: me.address.zip_code || '',
+              city: me.address.city || '',
+            })
+          }
+          setLoyaltyPoints(me.loyalty_points || 0)
         }
       })
       .catch(() => {})
@@ -39,7 +44,11 @@ export default function Checkout() {
   }, [token])
 
   const livraison = orderType === 'sur_place' || total >= SEUIL_OFFERT ? 0 : FRAIS_LIVRAISON
-  const aPayer = total + livraison
+  const maxPointsPossible = Math.floor((total + livraison) / 0.10)
+  const allowedPoints = Math.min(loyaltyPoints, maxPointsPossible)
+  const actualUsedPoints = Math.min(usePoints, allowedPoints)
+  const discount = actualUsedPoints * 0.10
+  const aPayer = total + livraison - discount
 
   const champ = (e) => setAdresse((a) => ({ ...a, [e.target.name]: e.target.value }))
 
@@ -56,7 +65,8 @@ export default function Checkout() {
         zip_code: adresse.zip_code,
         city: adresse.city,
         order_type: orderType,
-        items: items.map((i) => ({ id_pizza: i.id_pizza, quantity: i.qty })),
+        use_points: actualUsedPoints,
+        items: items.map((i) => ({ id_pizza: i.id_pizza ?? i.id, quantity: i.qty })),
       })
       clear()
       setConfirmation(data)
@@ -158,6 +168,29 @@ export default function Checkout() {
                 </div>
               </section>
             )}
+
+            {/* Points de fidélité */}
+            {loyaltyPoints > 0 && (
+              <section className="animate-pop rounded-3xl border border-white/10 bg-[#240400] p-6 motion-reduce:animate-none">
+                <h2 className="font-poppins text-base font-semibold text-ambre">Vos points de fidélité</h2>
+                <p className="mt-2 font-poppins text-[0.8rem] text-creme/60">
+                  Vous avez <strong className="text-ambre">{loyaltyPoints} points</strong> (soit {(loyaltyPoints * 0.10).toFixed(2)} €).
+                </p>
+                <div className="mt-4">
+                  <label className="flex cursor-pointer items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={usePoints > 0}
+                      onChange={(e) => setUsePoints(e.target.checked ? allowedPoints : 0)}
+                      className="h-5 w-5 rounded border-white/10 bg-dark text-rouge focus:ring-rouge"
+                    />
+                    <span className="font-poppins text-[0.85rem] text-creme">
+                      Utiliser pour cette commande (-{(allowedPoints * 0.10).toFixed(2)} €)
+                    </span>
+                  </label>
+                </div>
+              </section>
+            )}
             </div>
 
             {/* Colonne droite : récap + validation (sticky en desktop) */}
@@ -184,6 +217,13 @@ export default function Checkout() {
                   value={livraison === 0 ? 'Offerte' : `${livraison.toFixed(2)} €`}
                   highlight={livraison === 0}
                 />
+                {actualUsedPoints > 0 && (
+                  <RecapRow
+                    label={`Fidélité (${actualUsedPoints} pts)`}
+                    value={`-${discount.toFixed(2)} €`}
+                    highlight={true}
+                  />
+                )}
               </div>
 
               <div className="mt-5 flex items-end justify-between border-t border-white/10 pt-5">

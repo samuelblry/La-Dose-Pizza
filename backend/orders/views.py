@@ -33,12 +33,23 @@ def orders(request):
     if not items:
         return Response({'error': 'Panier vide'}, status=status.HTTP_400_BAD_REQUEST)
 
+    use_points = request.data.get('use_points', 0)
+    try:
+        use_points = int(use_points)
+    except ValueError:
+        use_points = 0
+
+    if use_points < 0:
+        return Response({'error': 'Points invalides'}, status=status.HTTP_400_BAD_REQUEST)
+    if use_points > request.user.loyalty_points:
+        return Response({'error': 'Points de fidélité insuffisants'}, status=status.HTTP_400_BAD_REQUEST)
+
     total = Decimal('0.00')
     lignes = []
 
     for item in items:
         qte = item.get('quantity', 1)
-        pizza_id = item.get('pizza_id')
+        pizza_id = item.get('pizza_id') or item.get('id_pizza')
         drink_id = item.get('drink_id')
         dessert_id = item.get('dessert_id')
         prix_unitaire = None
@@ -68,15 +79,28 @@ def orders(request):
         if prix_unitaire is not None:
             total += prix_unitaire * qte
 
+    discount = Decimal(use_points) * Decimal('0.10')
+    if discount > total:
+        max_points = int(total / Decimal('0.10'))
+        use_points = max_points
+        discount = Decimal(use_points) * Decimal('0.10')
+
+    total -= discount
+
     commande = CustomerOrder.objects.create(
         user=request.user,
         invoice_number=_generer_numero_facture(),
         total_amount=total,
+        points_used=use_points,
         order_type=request.data.get('order_type', 'livraison'),
         street=request.data.get('street', ''),
         zip_code=request.data.get('zip_code', ''),
         city=request.data.get('city', ''),
     )
+
+    if use_points > 0:
+        request.user.loyalty_points -= use_points
+        request.user.save()
 
     for l in lignes:
         OrderLine.objects.create(order=commande, **l)
@@ -133,6 +157,13 @@ def order_invoice(request, pk):
         y -= 20
 
     y -= 10
+    if commande.points_used > 0:
+        discount = Decimal(commande.points_used) * Decimal('0.10')
+        p.setFont('Helvetica', 11)
+        p.drawString(350, y, f'Réduction ({commande.points_used} pts)')
+        p.drawString(490, y, f'-{discount:.2f} €')
+        y -= 20
+
     p.setFont('Helvetica-Bold', 12)
     p.drawString(420, y, f'Total : {commande.total_amount:.2f} €')
 

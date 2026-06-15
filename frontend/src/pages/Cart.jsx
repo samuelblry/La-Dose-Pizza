@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { MEDIA_BASE } from '../services/api'
 
 // Frais de livraison offerts au-dessus de ce montant
 const FRAIS_LIVRAISON = 2.9
@@ -44,15 +45,18 @@ export default function Cart() {
             <div className="flex flex-col gap-5 lg:flex-1">
             {/* Liste des articles */}
             <section className="flex flex-col gap-3">
-              {items.map((item) => (
-                <Ligne
-                  key={item.id_pizza}
-                  item={item}
-                  onInc={() => addItem(item)}
-                  onDec={() => decItem(item.id_pizza)}
-                  onRemove={() => removeItem(item.id_pizza)}
-                />
-              ))}
+              {items.map((item) => {
+                const pid = item.id_pizza ?? item.id
+                return (
+                  <Ligne
+                    key={pid}
+                    item={item}
+                    onInc={() => addItem(item)}
+                    onDec={() => decItem(pid)}
+                    onRemove={() => removeItem(pid)}
+                  />
+                )
+              })}
             </section>
 
             {/* Lien vers la carte pour ajouter d'autres pizzas */}
@@ -147,7 +151,12 @@ function Ligne({ item, onInc, onDec, onRemove }) {
       {/* Visuel carré (image ou monogramme) */}
       <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-dark lg:h-24 lg:w-24 lg:rounded-3xl">
         {item.image_url ? (
-          <img src={item.image_url} alt={item.name} loading="lazy" className="h-full w-full object-cover" />
+          <img 
+            src={item.image_url.startsWith('http') ? item.image_url : `${MEDIA_BASE}${item.image_url.startsWith('/') ? '' : '/'}${item.image_url}`} 
+            alt={item.name} 
+            loading="lazy" 
+            className="h-full w-full object-cover" 
+          />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <span className="logo-court block h-7 w-12 opacity-20" />

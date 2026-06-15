@@ -14,15 +14,18 @@ export default function Menu() {
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState(null)
 
-  // Chargement de la carte depuis GET /api/menu/pizzas/
+  // Liste de base pour extraire les ingrédients/allergènes disponibles
+  const [pizzasBase, setPizzasBase] = useState([])
+
+  // Chargement initial pour les filtres
   useEffect(() => {
     let actif = true
     apiPizzas()
-      .then((d) => actif && setPizzas(Array.isArray(d) ? d : d.results || []))
-      .catch(() => actif && setErreur('Impossible de charger la carte.'))
-      .finally(() => actif && setLoading(false))
+      .then((d) => actif && setPizzasBase(Array.isArray(d) ? d : d.results || []))
+      .catch(() => {})
     return () => { actif = false }
   }, [])
+
   const [recherche, setRecherche] = useState('')
   const [dispoOnly, setDispoOnly] = useState(false)
   const [tri, setTri] = useState('defaut')
@@ -30,18 +33,34 @@ export default function Menu() {
   const [allergenes, setAllergenes] = useState([]) // allergènes à exclure
   const [showFiltres, setShowFiltres] = useState(false)
 
-  // Listes d'options déduites des pizzas reçues
+  // Chargement des pizzas filtrées
+  useEffect(() => {
+    let actif = true
+    setLoading(true)
+    apiPizzas(null, { search: recherche, dispoOnly, ingredients, allergenes, tri })
+      .then((d) => actif && setPizzas(Array.isArray(d) ? d : d.results || []))
+      .catch(() => actif && setErreur('Impossible de charger la carte.'))
+      .finally(() => actif && setLoading(false))
+    return () => { actif = false }
+  }, [recherche, dispoOnly, ingredients, allergenes, tri])
+
   const ingredientsDispo = useMemo(() => {
     const set = new Set()
-    pizzas.forEach((p) => (p.ingredients || []).forEach((i) => set.add(i)))
+    pizzasBase.forEach((p) => (p.ingredients || []).forEach((i) => {
+      const name = typeof i === 'string' ? i : i?.name
+      if (name) set.add(name)
+    }))
     return [...set].sort((a, b) => a.localeCompare(b))
-  }, [pizzas])
+  }, [pizzasBase])
 
   const allergenesDispo = useMemo(() => {
     const set = new Set()
-    pizzas.forEach((p) => (p.allergens || []).forEach((a) => set.add(a)))
+    pizzasBase.forEach((p) => (p.allergens || []).forEach((a) => {
+      const name = typeof a === 'string' ? a : a?.name
+      if (name) set.add(name)
+    }))
     return [...set].sort((a, b) => a.localeCompare(b))
-  }, [pizzas])
+  }, [pizzasBase])
 
   const toggle = (liste, setListe, val) =>
     setListe(liste.includes(val) ? liste.filter((x) => x !== val) : [...liste, val])
@@ -53,40 +72,7 @@ export default function Menu() {
 
   const nbFiltres = ingredients.length + allergenes.length
 
-  const liste = useMemo(() => {
-    let res = [...pizzas]
-
-    if (recherche.trim()) {
-      const q = recherche.toLowerCase()
-      res = res.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.description || '').toLowerCase().includes(q)
-      )
-    }
-
-    if (dispoOnly) res = res.filter((p) => p.is_available)
-
-    // Garde les pizzas contenant au moins un des ingrédients sélectionnés
-    if (ingredients.length) {
-      res = res.filter((p) =>
-        ingredients.some((ing) => (p.ingredients || []).includes(ing))
-      )
-    }
-
-    // Retire les pizzas contenant un des allergènes à exclure
-    if (allergenes.length) {
-      res = res.filter(
-        (p) => !(p.allergens || []).some((a) => allergenes.includes(a))
-      )
-    }
-
-    if (tri === 'prix_asc') res.sort((a, b) => a.base_price - b.base_price)
-    else if (tri === 'prix_desc') res.sort((a, b) => b.base_price - a.base_price)
-    else if (tri === 'nom') res.sort((a, b) => a.name.localeCompare(b.name))
-
-    return res
-  }, [pizzas, recherche, dispoOnly, ingredients, allergenes, tri])
+  const liste = pizzas
 
   // Écran de chargement
   if (loading) {

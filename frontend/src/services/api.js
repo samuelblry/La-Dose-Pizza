@@ -77,8 +77,16 @@ export async function apiDeleteMe(token) {
   if (!res.ok) throw await res.json()
 }
 
-export async function apiPizzas(token) {
-  const res = await fetch(`${BASE}/menu/pizzas/`, { headers: headers(token) })
+export async function apiPizzas(token, params = {}) {
+  const qs = new URLSearchParams()
+  if (params.search) qs.append('search', params.search)
+  if (params.dispoOnly) qs.append('dispo_only', 'true')
+  if (params.ingredients?.length) qs.append('ingredients', params.ingredients.join(','))
+  if (params.allergenes?.length) qs.append('allergenes_exclude', params.allergenes.join(','))
+  if (params.tri && params.tri !== 'defaut') qs.append('ordering', params.tri)
+
+  const url = `${BASE}/menu/pizzas/${qs.toString() ? '?' + qs.toString() : ''}`
+  const res = await fetch(url, { headers: headers(token) })
   if (!res.ok) throw await res.json()
   return res.json()
 }

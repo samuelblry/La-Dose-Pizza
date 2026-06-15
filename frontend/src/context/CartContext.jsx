@@ -15,14 +15,15 @@ export function CartProvider({ children }) {
 
   // Ajoute une pizza ou incrémente la quantité si déjà présente
   const addItem = (pizza) => {
+    const idPizza = pizza.id_pizza ?? pizza.id
     setItems((prev) => {
-      const found = prev.find((i) => i.id_pizza === pizza.id_pizza)
+      const found = prev.find((i) => (i.id_pizza ?? i.id) === idPizza)
       if (found) {
         return prev.map((i) =>
-          i.id_pizza === pizza.id_pizza ? { ...i, qty: i.qty + 1 } : i
+          (i.id_pizza ?? i.id) === idPizza ? { ...i, qty: i.qty + 1 } : i
         )
       }
-      return [...prev, { ...pizza, qty: 1 }]
+      return [...prev, { ...pizza, id_pizza: idPizza, qty: 1 }]
     })
   }
 
@@ -30,12 +31,12 @@ export function CartProvider({ children }) {
   const decItem = (id) => {
     setItems((prev) =>
       prev
-        .map((i) => (i.id_pizza === id ? { ...i, qty: i.qty - 1 } : i))
+        .map((i) => ((i.id_pizza ?? i.id) === id ? { ...i, qty: i.qty - 1 } : i))
         .filter((i) => i.qty > 0)
     )
   }
 
-  const removeItem = (id) => setItems((prev) => prev.filter((i) => i.id_pizza !== id))
+  const removeItem = (id) => setItems((prev) => prev.filter((i) => (i.id_pizza ?? i.id) !== id))
 
   const clear = () => setItems([])
 

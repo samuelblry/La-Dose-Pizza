@@ -25,6 +25,7 @@ class CustomerOrder(models.Model):
     zip_code = models.CharField(max_length=20, blank=True)
     city = models.CharField(max_length=255, blank=True)
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='orders')
+    points_used = models.IntegerField(default=0)
 
     def __str__(self):
         return self.invoice_number

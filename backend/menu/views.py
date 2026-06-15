@@ -15,9 +15,36 @@ def _is_admin(request):
 def pizzas(request):
     if request.method == 'GET':
         qs = Pizza.objects.all()
-        # les non-admins ne voient que les pizzas disponibles
-        if not (request.user.is_authenticated and request.user.is_admin):
+
+        search = request.query_params.get('search', '')
+        dispo_only = request.query_params.get('dispo_only', 'false').lower() == 'true'
+        ingredients = request.query_params.get('ingredients', '')
+        allergenes_exclude = request.query_params.get('allergenes_exclude', '')
+        ordering = request.query_params.get('ordering', 'defaut')
+
+        if search:
+            from django.db.models import Q
+            qs = qs.filter(Q(name__icontains=search) | Q(description__icontains=search))
+
+        # les non-admins ne voient que les pizzas disponibles (ou si dispo_only est true)
+        if dispo_only or not (request.user.is_authenticated and request.user.is_admin):
             qs = qs.filter(is_available=True)
+
+        if ingredients:
+            ing_list = [i.strip() for i in ingredients.split(',')]
+            qs = qs.filter(ingredients__name__in=ing_list).distinct()
+
+        if allergenes_exclude:
+            al_list = [a.strip() for a in allergenes_exclude.split(',')]
+            qs = qs.exclude(ingredients__allergens__name__in=al_list).distinct()
+
+        if ordering == 'prix_asc':
+            qs = qs.order_by('base_price')
+        elif ordering == 'prix_desc':
+            qs = qs.order_by('-base_price')
+        elif ordering == 'nom':
+            qs = qs.order_by('name')
+
         serializer = PizzaSerializer(qs, many=True)
         return Response(serializer.data)
 
