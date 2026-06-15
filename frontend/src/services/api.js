@@ -1,5 +1,8 @@
 const BASE = 'http://localhost:8000/api'
 
+// Racine pour les fichiers media Django (images uploadées)
+export const MEDIA_BASE = 'http://localhost:8000'
+
 const headers = (token) => ({
   'Content-Type': 'application/json',
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -112,6 +115,22 @@ export async function apiCreateReservation(token, payload) {
   const data = await res.json()
   if (!res.ok) throw data
   return data
+}
+
+export async function apiGetTablesAvailability(token, date, time) {
+  const res = await fetch(`${BASE}/reservations/tables/?date=${date}&time=${time}`, { headers: headers(token) })
+  if (!res.ok) throw await res.json()
+  return res.json()
+}
+
+export async function apiCancelReservation(token, id) {
+  const res = await fetch(`${BASE}/reservations/${id}/`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify({ status: 'annulee' }),
+  })
+  if (!res.ok) throw await res.json()
+  return res.json()
 }
 
 // Admin

@@ -1,10 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PizzaCard from '../components/PizzaCard'
-
-// Données de démo pour visualiser l'affichage — à remplacer par GET /api/menu/pizzas/
-// Chaque pizza : { id_pizza, name, description, base_price, image_url, is_available, ingredients[], allergens[] }
-// ingredients et allergens = tableaux de noms, renvoyés par l'API (pizza_recipe + has_allergen)
-const PIZZAS_DEMO = []
+import { apiPizzas } from '../services/api'
 
 const TRIS = [
   { value: 'defaut', label: 'Par défaut' },
@@ -14,8 +10,19 @@ const TRIS = [
 ]
 
 export default function Menu() {
-  // pizzas = tableau récupéré depuis GET /api/menu/pizzas/
-  const [pizzas] = useState(PIZZAS_DEMO)
+  const [pizzas, setPizzas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [erreur, setErreur] = useState(null)
+
+  // Chargement de la carte depuis GET /api/menu/pizzas/
+  useEffect(() => {
+    let actif = true
+    apiPizzas()
+      .then((d) => actif && setPizzas(Array.isArray(d) ? d : d.results || []))
+      .catch(() => actif && setErreur('Impossible de charger la carte.'))
+      .finally(() => actif && setLoading(false))
+    return () => { actif = false }
+  }, [])
   const [recherche, setRecherche] = useState('')
   const [dispoOnly, setDispoOnly] = useState(false)
   const [tri, setTri] = useState('defaut')
@@ -80,6 +87,38 @@ export default function Menu() {
 
     return res
   }, [pizzas, recherche, dispoOnly, ingredients, allergenes, tri])
+
+  // Écran de chargement
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-dark pb-32">
+        <header className="px-6 pt-24 text-center lg:pt-32">
+          <p className="mb-2 font-poppins text-[0.62rem] uppercase tracking-[0.3em] text-ambre">Pizzeria artisanale</p>
+          <h1 className="font-lostar text-[2.6rem] leading-none text-rouge lg:text-[4rem]">Notre Carte</h1>
+        </header>
+        <div className="mx-auto mt-16 grid max-w-6xl grid-cols-2 gap-4 px-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="animate-pulse rounded-2xl bg-white/5 h-64" />
+          ))}
+        </div>
+      </main>
+    )
+  }
+
+  // Écran d'erreur
+  if (erreur) {
+    return (
+      <main className="min-h-screen bg-dark pb-32">
+        <header className="px-6 pt-24 text-center lg:pt-32">
+          <p className="mb-2 font-poppins text-[0.62rem] uppercase tracking-[0.3em] text-ambre">Pizzeria artisanale</p>
+          <h1 className="font-lostar text-[2.6rem] leading-none text-rouge lg:text-[4rem]">Notre Carte</h1>
+        </header>
+        <div className="mt-16 flex flex-col items-center px-6 text-center">
+          <p className="font-poppins text-sm text-rouge">{erreur}</p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-dark pb-32">
@@ -250,7 +289,7 @@ export default function Menu() {
       {liste.length > 0 ? (
         <div className="mx-auto mt-5 grid max-w-6xl grid-cols-2 gap-4 px-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {liste.map((pizza) => (
-            <PizzaCard key={pizza.id_pizza} pizza={pizza} />
+            <PizzaCard key={pizza.id ?? pizza.id_pizza} pizza={pizza} />
           ))}
         </div>
       ) : (

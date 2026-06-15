@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .models import UserAccount
+from .models import UserAccount, Address
 from .serializers import RegisterSerializer, UserProfileSerializer, AdminClientSerializer
 from orders.models import CustomerOrder
 
@@ -47,11 +47,66 @@ def logout(request):
     return Response({'message': 'Déconnecté'})
 
 
-@api_view(['GET'])
+@api_view(['GET', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    serializer = UserProfileSerializer(request.user)
-    return Response(serializer.data)
+    user = request.user
+
+    if request.method == 'GET':
+        return Response(UserProfileSerializer(user).data)
+
+    if request.method == 'PATCH':
+        champs_user = ('first_name', 'last_name', 'email', 'phone')
+        for champ in champs_user:
+            if champ in request.data:
+                setattr(user, champ, request.data[champ])
+        user.save()
+
+        # mise à jour ou création de l'adresse
+        champs_adresse = {k: request.data[k] for k in ('street', 'zip_code', 'city') if k in request.data}
+        if champs_adresse:
+            adresse = user.addresses.first()
+            if adresse:
+                for k, v in champs_adresse.items():
+                    setattr(adresse, k, v)
+                adresse.save()
+            else:
+                Address.objects.create(user=user, **champs_adresse)
+
+        return Response(UserProfileSerializer(user).data)
+
+    if request.method == 'DELETE':
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def me_password(request):
+    current = request.data.get('current_password', '')
+    new = request.data.get('new_password', '')
+
+    if not current or not new:
+        return Response(
+            {'error': 'current_password et new_password requis'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if len(new) < 6:
+        return Response(
+            {'error': 'Le nouveau mot de passe doit faire au moins 6 caractères'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = request.user
+    if not user.check_password(current):
+        return Response(
+            {'error': 'Mot de passe actuel incorrect'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user.set_password(new)
+    user.save()
+    return Response({'message': 'Mot de passe mis à jour'})
 
 
 # --- vues admin ---

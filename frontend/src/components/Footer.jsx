@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function Footer() {
   return (
     <footer className="bg-dark px-7 pb-28 pt-14 text-creme lg:px-8 lg:pb-14 lg:pt-20">
@@ -14,10 +16,10 @@ export default function Footer() {
             <div>
               <h4 className="font-lostar text-xl text-ambre">Le restaurant</h4>
               <ul className="mt-3 space-y-2 font-poppins text-sm text-creme/80">
-                <li>Notre carte</li>
-                <li>Commander en ligne</li>
-                <li>Réserver une table</li>
-                <li>Points de fidélité</li>
+                <li><Link to="/menu" className="transition hover:text-ambre">Notre carte</Link></li>
+                <li><Link to="/panier" className="transition hover:text-ambre">Commander en ligne</Link></li>
+                <li><Link to="/reservation" className="transition hover:text-ambre">Réserver une table</Link></li>
+                <li><Link to="/mon-compte" className="transition hover:text-ambre">Points de fidélité</Link></li>
               </ul>
             </div>
             <div>
@@ -26,7 +28,11 @@ export default function Footer() {
                 <li>12 rue de la Pizza</li>
                 <li>75011 Paris</li>
                 <li>01 23 45 67 89</li>
-                <li>contact@ladosepizza.fr</li>
+                <li>
+                  <a href="mailto:contact@ladosepizza.fr" className="transition hover:text-ambre">
+                    contact@ladosepizza.fr
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
