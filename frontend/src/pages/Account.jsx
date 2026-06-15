@@ -31,6 +31,30 @@ export default function Account() {
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
+  const [telechargement, setTelechargement] = useState(null) // id commande en cours de téléchargement
+
+  // Télécharge la facture PDF avec le token JWT
+  async function telechargerFacture(orderId, invoiceNumber) {
+    setTelechargement(orderId)
+    try {
+      const res = await fetch(`${MEDIA_BASE}/api/orders/${orderId}/invoice/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Erreur')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `facture_${invoiceNumber}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Impossible de télécharger la facture.')
+    } finally {
+      setTelechargement(null)
+    }
+  }
+
 
   // Panneaux dépliables
   const [editInfos, setEditInfos] = useState(false)
@@ -328,17 +352,16 @@ export default function Account() {
                             <span className={`h-2 w-2 rounded-full ${st.dot}`} />
                             {st.label}
                           </span>
-                          <a
-                            href={`${MEDIA_BASE}/api/orders/${order.id ?? order.id_order}/invoice/`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 font-poppins text-[0.72rem] text-creme/60 underline-offset-4 transition hover:text-ambre hover:underline"
+                          <button
+                            onClick={() => telechargerFacture(order.id ?? order.id_order, order.invoice_number)}
+                            disabled={telechargement === (order.id ?? order.id_order)}
+                            className="flex items-center gap-1.5 font-poppins text-[0.72rem] text-creme/60 underline-offset-4 transition hover:text-ambre hover:underline disabled:opacity-40"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
                             </svg>
-                            Facture PDF
-                          </a>
+                            {telechargement === (order.id ?? order.id_order) ? 'Téléchargement...' : 'Facture PDF'}
+                          </button>
                         </div>
                       </li>
                     )
