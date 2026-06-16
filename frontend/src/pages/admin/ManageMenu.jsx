@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { apiAdminPizzas, apiAdminCreatePizza, apiAdminPatchPizza, apiAdminDeletePizza } from '../../services/api'
+import { apiAdminPizzas, apiAdminCreatePizza, apiAdminPatchPizza, apiAdminDeletePizza, MEDIA_BASE } from '../../services/api'
 import AdminLayout, { SearchBar } from '../../components/AdminLayout'
 import { Vide } from './Orders'
 
@@ -148,7 +148,7 @@ export default function ManageMenu() {
               {/* visuel */}
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl bg-black/30">
                 {pizza.image_url ? (
-                  <img src={pizza.image_url} alt={pizza.name} className="h-full w-full object-cover" />
+                  <img src={`${MEDIA_BASE}/${pizza.image_url}`} alt={pizza.name} className="h-full w-full object-cover" />
                 ) : (
                   <span className="logo-court absolute left-1/2 top-1/2 block h-7 w-11 -translate-x-1/2 -translate-y-1/2 opacity-30" />
                 )}

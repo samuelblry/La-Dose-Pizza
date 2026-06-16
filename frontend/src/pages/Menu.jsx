@@ -1,10 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PizzaCard from '../components/PizzaCard'
-
-// Données de démo pour visualiser l'affichage — à remplacer par GET /api/menu/pizzas/
-// Chaque pizza : { id_pizza, name, description, base_price, image_url, is_available, ingredients[], allergens[] }
-// ingredients et allergens = tableaux de noms, renvoyés par l'API (pizza_recipe + has_allergen)
-const PIZZAS_DEMO = []
+import { apiPizzas } from '../services/api'
 
 const TRIS = [
   { value: 'defaut', label: 'Par défaut' },
@@ -14,8 +10,22 @@ const TRIS = [
 ]
 
 export default function Menu() {
-  // pizzas = tableau récupéré depuis GET /api/menu/pizzas/
-  const [pizzas] = useState(PIZZAS_DEMO)
+  const [pizzas, setPizzas] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [erreur, setErreur] = useState(null)
+
+  // Liste de base pour extraire les ingrédients/allergènes disponibles
+  const [pizzasBase, setPizzasBase] = useState([])
+
+  // Chargement initial pour les filtres
+  useEffect(() => {
+    let actif = true
+    apiPizzas()
+      .then((d) => actif && setPizzasBase(Array.isArray(d) ? d : d.results || []))
+      .catch(() => {})
+    return () => { actif = false }
+  }, [])
+
   const [recherche, setRecherche] = useState('')
   const [dispoOnly, setDispoOnly] = useState(false)
   const [tri, setTri] = useState('defaut')
@@ -23,18 +33,34 @@ export default function Menu() {
   const [allergenes, setAllergenes] = useState([]) // allergènes à exclure
   const [showFiltres, setShowFiltres] = useState(false)
 
-  // Listes d'options déduites des pizzas reçues
+  // Chargement des pizzas filtrées
+  useEffect(() => {
+    let actif = true
+    setLoading(true)
+    apiPizzas(null, { search: recherche, dispoOnly, ingredients, allergenes, tri })
+      .then((d) => actif && setPizzas(Array.isArray(d) ? d : d.results || []))
+      .catch(() => actif && setErreur('Impossible de charger la carte.'))
+      .finally(() => actif && setLoading(false))
+    return () => { actif = false }
+  }, [recherche, dispoOnly, ingredients, allergenes, tri])
+
   const ingredientsDispo = useMemo(() => {
     const set = new Set()
-    pizzas.forEach((p) => (p.ingredients || []).forEach((i) => set.add(i)))
+    pizzasBase.forEach((p) => (p.ingredients || []).forEach((i) => {
+      const name = typeof i === 'string' ? i : i?.name
+      if (name) set.add(name)
+    }))
     return [...set].sort((a, b) => a.localeCompare(b))
-  }, [pizzas])
+  }, [pizzasBase])
 
   const allergenesDispo = useMemo(() => {
     const set = new Set()
-    pizzas.forEach((p) => (p.allergens || []).forEach((a) => set.add(a)))
+    pizzasBase.forEach((p) => (p.allergens || []).forEach((a) => {
+      const name = typeof a === 'string' ? a : a?.name
+      if (name) set.add(name)
+    }))
     return [...set].sort((a, b) => a.localeCompare(b))
-  }, [pizzas])
+  }, [pizzasBase])
 
   const toggle = (liste, setListe, val) =>
     setListe(liste.includes(val) ? liste.filter((x) => x !== val) : [...liste, val])
@@ -46,40 +72,39 @@ export default function Menu() {
 
   const nbFiltres = ingredients.length + allergenes.length
 
-  const liste = useMemo(() => {
-    let res = [...pizzas]
+  const liste = pizzas
 
-    if (recherche.trim()) {
-      const q = recherche.toLowerCase()
-      res = res.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.description || '').toLowerCase().includes(q)
-      )
-    }
+  // Écran de chargement
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-dark pb-32">
+        <header className="px-6 pt-24 text-center lg:pt-32">
+          <p className="mb-2 font-poppins text-[0.62rem] uppercase tracking-[0.3em] text-ambre">Pizzeria artisanale</p>
+          <h1 className="font-lostar text-[2.6rem] leading-none text-rouge lg:text-[4rem]">Notre Carte</h1>
+        </header>
+        <div className="mx-auto mt-16 grid max-w-6xl grid-cols-2 gap-4 px-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="animate-pulse rounded-2xl bg-white/5 h-64" />
+          ))}
+        </div>
+      </main>
+    )
+  }
 
-    if (dispoOnly) res = res.filter((p) => p.is_available)
-
-    // Garde les pizzas contenant au moins un des ingrédients sélectionnés
-    if (ingredients.length) {
-      res = res.filter((p) =>
-        ingredients.some((ing) => (p.ingredients || []).includes(ing))
-      )
-    }
-
-    // Retire les pizzas contenant un des allergènes à exclure
-    if (allergenes.length) {
-      res = res.filter(
-        (p) => !(p.allergens || []).some((a) => allergenes.includes(a))
-      )
-    }
-
-    if (tri === 'prix_asc') res.sort((a, b) => a.base_price - b.base_price)
-    else if (tri === 'prix_desc') res.sort((a, b) => b.base_price - a.base_price)
-    else if (tri === 'nom') res.sort((a, b) => a.name.localeCompare(b.name))
-
-    return res
-  }, [pizzas, recherche, dispoOnly, ingredients, allergenes, tri])
+  // Écran d'erreur
+  if (erreur) {
+    return (
+      <main className="min-h-screen bg-dark pb-32">
+        <header className="px-6 pt-24 text-center lg:pt-32">
+          <p className="mb-2 font-poppins text-[0.62rem] uppercase tracking-[0.3em] text-ambre">Pizzeria artisanale</p>
+          <h1 className="font-lostar text-[2.6rem] leading-none text-rouge lg:text-[4rem]">Notre Carte</h1>
+        </header>
+        <div className="mt-16 flex flex-col items-center px-6 text-center">
+          <p className="font-poppins text-sm text-rouge">{erreur}</p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="min-h-screen bg-dark pb-32">
@@ -250,7 +275,7 @@ export default function Menu() {
       {liste.length > 0 ? (
         <div className="mx-auto mt-5 grid max-w-6xl grid-cols-2 gap-4 px-5 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
           {liste.map((pizza) => (
-            <PizzaCard key={pizza.id_pizza} pizza={pizza} />
+            <PizzaCard key={pizza.id ?? pizza.id_pizza} pizza={pizza} />
           ))}
         </div>
       ) : (

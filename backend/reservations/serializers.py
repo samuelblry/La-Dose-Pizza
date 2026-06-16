@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Reservation
+from .models import Reservation, RestaurantTable
 
 
 class ReservationSerializer(serializers.ModelSerializer):
@@ -16,3 +16,11 @@ class ReservationSerializer(serializers.ModelSerializer):
             'guest_count', 'status', 'user_email',
             'user_first_name', 'user_last_name', 'user_phone', 'table_number',
         ]
+
+
+class RestaurantTableSerializer(serializers.ModelSerializer):
+    is_reserved = serializers.BooleanField(read_only=True, default=False)
+
+    class Meta:
+        model = RestaurantTable
+        fields = ['id', 'table_number', 'capacity', 'is_reserved']

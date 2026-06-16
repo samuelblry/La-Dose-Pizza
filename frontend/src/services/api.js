@@ -1,5 +1,8 @@
 const BASE = 'http://localhost:8000/api'
 
+// Racine pour les fichiers media Django (images uploadées)
+export const MEDIA_BASE = 'http://localhost:8000'
+
 const headers = (token) => ({
   'Content-Type': 'application/json',
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -74,8 +77,16 @@ export async function apiDeleteMe(token) {
   if (!res.ok) throw await res.json()
 }
 
-export async function apiPizzas(token) {
-  const res = await fetch(`${BASE}/menu/pizzas/`, { headers: headers(token) })
+export async function apiPizzas(token, params = {}) {
+  const qs = new URLSearchParams()
+  if (params.search) qs.append('search', params.search)
+  if (params.dispoOnly) qs.append('dispo_only', 'true')
+  if (params.ingredients?.length) qs.append('ingredients', params.ingredients.join(','))
+  if (params.allergenes?.length) qs.append('allergenes_exclude', params.allergenes.join(','))
+  if (params.tri && params.tri !== 'defaut') qs.append('ordering', params.tri)
+
+  const url = `${BASE}/menu/pizzas/${qs.toString() ? '?' + qs.toString() : ''}`
+  const res = await fetch(url, { headers: headers(token) })
   if (!res.ok) throw await res.json()
   return res.json()
 }
@@ -112,6 +123,22 @@ export async function apiCreateReservation(token, payload) {
   const data = await res.json()
   if (!res.ok) throw data
   return data
+}
+
+export async function apiGetTablesAvailability(token, date, time) {
+  const res = await fetch(`${BASE}/reservations/tables/?date=${date}&time=${time}`, { headers: headers(token) })
+  if (!res.ok) throw await res.json()
+  return res.json()
+}
+
+export async function apiCancelReservation(token, id) {
+  const res = await fetch(`${BASE}/reservations/${id}/`, {
+    method: 'PATCH',
+    headers: headers(token),
+    body: JSON.stringify({ status: 'annulee' }),
+  })
+  if (!res.ok) throw await res.json()
+  return res.json()
 }
 
 // Admin

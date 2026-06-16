@@ -1,9 +1,13 @@
 import { useCart } from '../context/CartContext'
+import { MEDIA_BASE } from '../services/api'
 
 export default function PizzaCard({ pizza }) {
   const { items, addItem, decItem } = useCart()
   const dispo = pizza.is_available
-  const qty = items.find((i) => i.id_pizza === pizza.id_pizza)?.qty || 0
+  const pid = pizza.id ?? pizza.id_pizza
+  // image_url est un chemin relatif Django (ex: "media/pizzas/xxx.jpg")
+  const image = pizza.image_url ? `${MEDIA_BASE}/${pizza.image_url}` : null
+  const qty = items.find((i) => i.id_pizza === pid)?.qty || 0
 
   return (
     <article
@@ -12,9 +16,9 @@ export default function PizzaCard({ pizza }) {
       }`}
     >
       <div className="relative aspect-square overflow-hidden bg-dark">
-        {pizza.image_url ? (
+        {image ? (
           <img
-            src={pizza.image_url}
+            src={image}
             alt={pizza.name}
             loading="lazy"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
@@ -59,7 +63,7 @@ export default function PizzaCard({ pizza }) {
           ) : (
             <div className="flex h-11 w-full animate-pop items-center justify-between rounded-full bg-rouge px-1.5 motion-reduce:animate-none">
               <button
-                onClick={() => decItem(pizza.id_pizza)}
+                onClick={() => decItem(pid)}
                 aria-label="Retirer une pizza"
                 className="flex h-8 w-8 items-center justify-center rounded-full text-creme transition hover:bg-white/10"
               >

@@ -1,8 +1,8 @@
 // Page réservation — POST /api/reservations/
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { apiCreateReservation } from '../services/api'
+import { apiCreateReservation, apiGetTablesAvailability } from '../services/api'
 
 // Créneaux d'ouverture proposés
 const CRENEAUX = ['12:00', '12:30', '13:00', '13:30', '19:00', '19:30', '20:00', '20:30', '21:00', '21:30']
@@ -18,18 +18,39 @@ export default function Reservation() {
   const [erreur, setErreur] = useState('')
   const [saving, setSaving] = useState(false)
   const [confirmation, setConfirmation] = useState(null)
+  const [tables, setTables] = useState([])
+  const [selectedTableId, setSelectedTableId] = useState(null)
+  const [loadingTables, setLoadingTables] = useState(false)
+
+  useEffect(() => {
+    if (date && heure) {
+      setLoadingTables(true)
+      apiGetTablesAvailability(token, date, heure)
+        .then((data) => {
+          setTables(data)
+          setSelectedTableId(null)
+        })
+        .catch(() => setErreur('Erreur lors du chargement des tables.'))
+        .finally(() => setLoadingTables(false))
+    } else {
+      setTables([])
+      setSelectedTableId(null)
+    }
+  }, [date, heure, token])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErreur('')
     if (!date) return setErreur('Choisissez une date.')
     if (!heure) return setErreur('Choisissez un créneau horaire.')
+    if (!selectedTableId) return setErreur('Veuillez choisir une table sur le plan.')
     setSaving(true)
     try {
       const data = await apiCreateReservation(token, {
         reservation_date: date,
         reservation_time: heure,
         guest_count: convives,
+        table_id: selectedTableId,
       })
       setConfirmation(data)
     } catch (err) {
@@ -120,6 +141,83 @@ export default function Reservation() {
                 ))}
               </div>
             </section>
+
+            {/* Schéma de la Pizzeria */}
+            {(date && heure) ? (
+              <section className="rounded-3xl border border-white/10 bg-[#240400] p-6">
+                <h2 className="font-poppins text-base font-semibold text-ambre">Plan de salle</h2>
+                <p className="mt-1 font-poppins text-[0.72rem] text-creme/40">Choisissez votre table</p>
+                {loadingTables ? (
+                  <div className="mt-6 flex justify-center py-4"><Spinner /></div>
+                ) : (
+                  <div className="relative mt-6 overflow-hidden rounded-2xl border-2 border-white/5 bg-dark/50 p-6 shadow-inner lg:p-8">
+                    {/* Zones de la salle */}
+                    <div className="absolute left-1/2 top-0 flex h-8 w-1/3 -translate-x-1/2 items-center justify-center rounded-b-xl bg-[#240400] border border-t-0 border-white/10">
+                      <span className="font-poppins text-[0.6rem] uppercase tracking-[0.2em] text-white/30">Comptoir</span>
+                    </div>
+                    
+                    <div className="absolute bottom-0 left-1/2 h-1.5 w-24 -translate-x-1/2 bg-ambre/30"></div>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2">
+                      <span className="font-poppins text-[0.6rem] uppercase tracking-[0.2em] text-ambre/50">Entrée</span>
+                    </div>
+
+                    <div className="my-10 grid grid-cols-2 gap-12 sm:grid-cols-3 lg:grid-cols-4 px-4">
+                      {tables.map(t => {
+                        const isDisabled = t.is_reserved || t.capacity < convives
+                        let statusText = `${t.capacity} pl.`
+                        if (t.is_reserved) statusText = "Réservée"
+                        else if (t.capacity < convives) statusText = "Trop petite"
+                        
+                        const isSelected = selectedTableId === t.id
+                        // Tables de 2 = carrées/rondes, tables > 2 = rectangulaires
+                        const shapeClass = t.capacity <= 2 ? "h-20 w-20 rounded-full" : "h-20 w-32 rounded-3xl"
+
+                        return (
+                          <button
+                            key={t.id}
+                            type="button"
+                            disabled={isDisabled}
+                            onClick={() => setSelectedTableId(t.id)}
+                            className={`relative flex flex-col items-center justify-center border-2 transition-all ${shapeClass} ${
+                              isDisabled
+                                ? 'cursor-not-allowed border-white/5 bg-white/5 opacity-40'
+                                : isSelected
+                                ? 'border-ambre bg-rouge/20 shadow-[0_0_20px_rgba(230,165,87,0.25)]'
+                                : 'border-white/10 bg-[#240400] hover:border-ambre/40 hover:bg-white/5'
+                            }`}
+                          >
+                            <span className={`font-lostar text-xl ${isDisabled ? 'text-white/40' : isSelected ? 'text-ambre' : 'text-creme'}`}>
+                              T{t.table_number}
+                            </span>
+                            <span className={`mt-0.5 font-poppins text-[0.6rem] uppercase tracking-wider ${isDisabled ? 'text-rouge' : 'text-creme/50'}`}>
+                              {statusText}
+                            </span>
+                            
+                            {/* Chaises décoratives (points) */}
+                            <div className="absolute -left-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-white/20"></div>
+                            <div className="absolute -right-3 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-white/20"></div>
+                            {t.capacity > 2 && (
+                              <>
+                                <div className="absolute -top-3 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/20"></div>
+                                <div className="absolute -bottom-3 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-white/20"></div>
+                              </>
+                            )}
+
+                            {isSelected && (
+                              <div className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ambre text-dark shadow-md">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="h-3.5 w-3.5">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </section>
+            ) : null}
           </div>
 
           {/* Colonne droite : Convives + CTA (sticky) */}

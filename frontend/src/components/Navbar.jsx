@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
+import { apiLogout } from '../services/api'
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const { isLoggedIn, isAdmin, logout } = useAuth()
+  const { isLoggedIn, isAdmin, logout, token } = useAuth()
   const { count } = useCart()
   const navigate = useNavigate()
 
@@ -17,7 +18,12 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await apiLogout(token, localStorage.getItem('refresh'))
+    } catch {
+      // déconnexion front même si le serveur échoue
+    }
     logout()
     setOpen(false)
     navigate('/')

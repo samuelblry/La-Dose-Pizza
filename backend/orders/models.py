@@ -20,11 +20,14 @@ class CustomerOrder(models.Model):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='en_attente')
     invoice_number = models.CharField(max_length=50, unique=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # montant avant réduction des points fidélité
+    gross_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     order_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='livraison')
     street = models.CharField(max_length=255, blank=True)
     zip_code = models.CharField(max_length=20, blank=True)
     city = models.CharField(max_length=255, blank=True)
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='orders')
+    points_used = models.IntegerField(default=0)
 
     def __str__(self):
         return self.invoice_number

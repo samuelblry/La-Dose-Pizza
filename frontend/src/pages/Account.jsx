@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { apiMe, apiOrders, apiLogout, apiUpdateMe, apiChangePassword, apiDeleteMe } from '../services/api'
+import { apiMe, apiOrders, apiReservations, apiLogout, apiUpdateMe, apiChangePassword, apiDeleteMe, apiCancelReservation, MEDIA_BASE } from '../services/api'
 
 // Palier de fidélité : 100 pts = une réduction
 const PALIER = 100
@@ -28,8 +28,33 @@ export default function Account() {
 
   const [user, setUser] = useState(null)
   const [orders, setOrders] = useState([])
+  const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
+  const [telechargement, setTelechargement] = useState(null) // id commande en cours de téléchargement
+
+  // Télécharge la facture PDF avec le token JWT
+  async function telechargerFacture(orderId, invoiceNumber) {
+    setTelechargement(orderId)
+    try {
+      const res = await fetch(`${MEDIA_BASE}/api/orders/${orderId}/invoice/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error('Erreur')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `facture_${invoiceNumber}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      alert('Impossible de télécharger la facture.')
+    } finally {
+      setTelechargement(null)
+    }
+  }
+
 
   // Panneaux dépliables
   const [editInfos, setEditInfos] = useState(false)
@@ -38,11 +63,12 @@ export default function Account() {
 
   useEffect(() => {
     let actif = true
-    Promise.all([apiMe(token), apiOrders(token)])
-      .then(([me, cmds]) => {
+    Promise.all([apiMe(token), apiOrders(token), apiReservations(token)])
+      .then(([me, cmds, resa]) => {
         if (!actif) return
         setUser(me)
         setOrders(Array.isArray(cmds) ? cmds : cmds.results || [])
+        setReservations(Array.isArray(resa) ? resa : resa.results || [])
       })
       .catch(() => actif && setErreur('Impossible de charger votre compte.'))
       .finally(() => actif && setLoading(false))
@@ -62,9 +88,23 @@ export default function Account() {
   }
 
   const supprimerCompte = async () => {
-    await apiDeleteMe(token)
+    try {
+      await apiDeleteMe(token)
+    } catch {
+      // on continue la déconnexion même si l'API échoue
+    }
     logout()
     navigate('/')
+  }
+
+  const handleCancelReservation = async (id) => {
+    if (!window.confirm("Voulez-vous vraiment annuler cette réservation ?")) return;
+    try {
+      await apiCancelReservation(token, id);
+      setReservations(reservations.map(r => r.id === id ? { ...r, status: 'annulee' } : r));
+    } catch (err) {
+      setErreur(err?.error || err?.detail || "Erreur lors de l'annulation.");
+    }
   }
 
   const points = user?.loyalty_points ?? 0
@@ -312,17 +352,82 @@ export default function Account() {
                             <span className={`h-2 w-2 rounded-full ${st.dot}`} />
                             {st.label}
                           </span>
-                          <a
-                            href={`http://localhost:8000/api/orders/${order.id_order}/invoice/`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center gap-1.5 font-poppins text-[0.72rem] text-creme/60 underline-offset-4 transition hover:text-ambre hover:underline"
+                          <button
+                            onClick={() => telechargerFacture(order.id ?? order.id_order, order.invoice_number)}
+                            disabled={telechargement === (order.id ?? order.id_order)}
+                            className="flex items-center gap-1.5 font-poppins text-[0.72rem] text-creme/60 underline-offset-4 transition hover:text-ambre hover:underline disabled:opacity-40"
                           >
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
                             </svg>
-                            Facture PDF
-                          </a>
+                            {telechargement === (order.id ?? order.id_order) ? 'Téléchargement...' : 'Facture PDF'}
+                          </button>
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
+            </section>
+
+            {/* Mes réservations */}
+            <section className="rounded-3xl border border-white/10 bg-[#240400] p-6 lg:min-w-0 lg:flex-1 mt-5 lg:mt-0">
+              <div className="flex items-center justify-between">
+                <h2 className="font-poppins text-xl text-ambre">Mes réservations</h2>
+                {reservations.length > 0 && (
+                  <span className="font-poppins text-[0.68rem] uppercase tracking-[0.15em] text-creme/40">
+                    {reservations.length} réservation{reservations.length > 1 ? 's' : ''}
+                  </span>
+                )}
+              </div>
+
+              {reservations.length === 0 ? (
+                <div className="flex flex-col items-center py-8 text-center">
+                  <span className="logo-court mb-4 block h-10 w-16 opacity-20" />
+                  <p className="font-poppins text-[0.82rem] text-creme/60">Aucune réservation pour le moment</p>
+                  <button
+                    onClick={() => navigate('/reservation')}
+                    className="mt-4 rounded-full bg-rouge px-5 py-2.5 font-poppins text-[0.74rem] font-medium uppercase tracking-[0.1em] text-creme transition hover:bg-rouge/90"
+                  >
+                    Réserver une table
+                  </button>
+                </div>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {reservations.map((r) => {
+                    const STATUTS_RESA = {
+                      en_attente: { label: 'En attente', dot: 'bg-creme/50', text: 'text-creme/60' },
+                      confirmee: { label: 'Confirmée', dot: 'bg-emerald-400', text: 'text-emerald-400' },
+                      annulee: { label: 'Annulée', dot: 'bg-rouge', text: 'text-rouge' },
+                    }
+                    const st = STATUTS_RESA[r.status] || STATUTS_RESA.en_attente
+                    return (
+                      <li key={r.id} className="rounded-2xl border border-white/5 bg-black/20 p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-poppins text-sm font-medium text-creme">
+                              {new Date(r.reservation_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              {' à '}{r.reservation_time?.slice(0, 5)}
+                            </p>
+                            <p className="mt-0.5 font-poppins text-[0.72rem] text-creme/50">
+                              {r.guest_count} personne{r.guest_count > 1 ? 's' : ''}
+                              {r.table_number ? ` · Table ${r.table_number}` : ''}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-2">
+                            <span className={`flex items-center gap-2 font-poppins text-[0.74rem] ${st.text}`}>
+                              <span className={`h-2 w-2 rounded-full ${st.dot}`} />
+                              {st.label}
+                            </span>
+                            {(r.status === 'en_attente' || r.status === 'confirmee') && (
+                              <button
+                                onClick={() => handleCancelReservation(r.id)}
+                                className="font-poppins text-[0.65rem] uppercase tracking-wider text-rouge/80 transition hover:text-rouge hover:underline"
+                              >
+                                Annuler
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </li>
                     )
