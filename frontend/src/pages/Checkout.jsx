@@ -65,6 +65,7 @@ export default function Checkout() {
         city: adresse.city,
         order_type: orderType,
         use_points: actualUsedPoints,
+        delivery_fee: livraison,
         items: items.map((i) => ({ id_pizza: i.id_pizza ?? i.id, quantity: i.qty })),
       })
       clear()

@@ -47,6 +47,15 @@ function AdminRoute({ children }) {
   return children
 }
 
+// Réservé au superadmin uniquement
+function SuperAdminRoute({ children }) {
+  const { isLoggedIn, isSuperAdmin } = useAuth()
+  const location = useLocation()
+  if (!isLoggedIn) return <Navigate to="/connexion" state={{ from: location.pathname }} replace />
+  if (!isSuperAdmin) return <Navigate to="/" replace />
+  return children
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -75,8 +84,8 @@ export default function App() {
             <Route path="/admin/clients" element={<AdminRoute><Clients /></AdminRoute>} />
             <Route path="/admin/reservations" element={<AdminRoute><Reservations /></AdminRoute>} />
 
-            {/* Accès Admin Global pour test via URL directe */}
-            <Route path="/super-admin" element={<SuperAdmin />} />
+            {/* Espace superadmin — réservé au superadmin */}
+            <Route path="/super-admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />
           </Routes>
           <Footer />
         </CartProvider>

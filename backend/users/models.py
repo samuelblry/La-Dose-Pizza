@@ -16,6 +16,7 @@ class UserAccountManager(BaseUserManager):
         extra.setdefault('is_admin', True)
         extra.setdefault('is_staff', True)
         extra.setdefault('is_superuser', True)
+        extra.setdefault('is_superadmin', True)
         return self.create_user(email, password, **extra)
 
 
@@ -26,6 +27,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=50, blank=True)
     loyalty_points = models.IntegerField(default=0)
     is_admin = models.BooleanField(default=False)
+    is_superadmin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 

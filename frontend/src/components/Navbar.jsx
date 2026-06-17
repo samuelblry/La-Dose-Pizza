@@ -7,7 +7,7 @@ import { apiLogout } from '../services/api'
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const { isLoggedIn, isAdmin, logout, token } = useAuth()
+  const { isLoggedIn, isAdmin, isSuperAdmin, logout, token } = useAuth()
   const { count } = useCart()
   const navigate = useNavigate()
 
@@ -47,8 +47,8 @@ export default function Navbar() {
         {/* navigation horizontale desktop */}
         <nav className="hidden items-center gap-7 lg:flex">
           <DeskLink to="/menu">LA CARTE</DeskLink>
-          {isLoggedIn && !isAdmin && <DeskLink to="/reservation">RESERVER</DeskLink>}
-          {!isAdmin && (
+          {isLoggedIn && !isAdmin && !isSuperAdmin && <DeskLink to="/reservation">RESERVER</DeskLink>}
+          {!isAdmin && !isSuperAdmin && (
             <Link
               to="/panier"
               aria-label="Mon panier"
@@ -68,7 +68,9 @@ export default function Navbar() {
           )}
           {isLoggedIn ? (
             <>
-              <DeskLink to={isAdmin ? '/admin' : '/mon-compte'}>{isAdmin ? 'DASHBOARD' : 'MON COMPTE'}</DeskLink>
+              <DeskLink to={isSuperAdmin ? '/super-admin' : isAdmin ? '/admin' : '/mon-compte'}>
+                {isSuperAdmin || isAdmin ? 'DASHBOARD' : 'MON COMPTE'}
+              </DeskLink>
             </>
           ) : (
             <>
@@ -115,13 +117,15 @@ export default function Navbar() {
             </button>
 
             <NavLink to="/menu" onClick={() => setOpen(false)}>La carte</NavLink>
-            {!isAdmin && (
+            {!isAdmin && !isSuperAdmin && (
               <NavLink to="/panier" onClick={() => setOpen(false)} badge={count}>Mon panier</NavLink>
             )}
 
             {isLoggedIn ? (
               <>
-                {isAdmin ? (
+                {isSuperAdmin ? (
+                  <NavLink to="/super-admin" onClick={() => setOpen(false)}>Dashboard</NavLink>
+                ) : isAdmin ? (
                   <NavLink to="/admin" onClick={() => setOpen(false)}>Dashboard</NavLink>
                 ) : (
                   <>

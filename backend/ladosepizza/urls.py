@@ -11,4 +11,5 @@ urlpatterns = [
     path('api/reservations/', include('reservations.urls')),
     path('api/users/', include('users.profile_urls')),
     path('api/admin/', include('users.admin_urls')),
+    path('api/payments/', include('payments.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

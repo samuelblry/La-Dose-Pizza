@@ -24,7 +24,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAccount
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'loyalty_points', 'address']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'loyalty_points', 'is_admin', 'is_superadmin', 'address']
 
     def get_address(self, obj):
         adresse = obj.addresses.first()
@@ -38,7 +38,7 @@ class AdminClientSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserAccount
-        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'loyalty_points', 'address']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone', 'loyalty_points', 'is_admin', 'is_superadmin', 'address']
 
     def get_address(self, obj):
         adresse = obj.addresses.first()

@@ -19,8 +19,14 @@ export default function Login() {
     const form = new FormData(e.target)
     try {
       const data = await apiLogin(form.get('email'), form.get('password'))
-      login(data.token, data.refresh, data.is_admin)
-      navigate(data.is_admin ? '/admin' : redirectTo)
+      login(data.token, data.refresh, data.is_admin, data.is_superadmin)
+      if (data.is_superadmin) {
+        navigate('/super-admin')
+      } else if (data.is_admin) {
+        navigate('/admin')
+      } else {
+        navigate(redirectTo)
+      }
     } catch (err) {
       setErreur(err?.error || 'Identifiants incorrects')
     } finally {
