@@ -108,6 +108,18 @@ export async function apiCreateOrder(token, payload) {
   return data
 }
 
+// Crée un PaymentIntent Stripe pour une commande
+export async function apiCreatePaymentIntent(token, orderId) {
+  const res = await fetch(`${BASE}/payments/create-intent/`, {
+    method: 'POST',
+    headers: headers(token),
+    body: JSON.stringify({ order_id: orderId }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw data
+  return data
+}
+
 export async function apiReservations(token) {
   const res = await fetch(`${BASE}/reservations/`, { headers: headers(token) })
   if (!res.ok) throw await res.json()

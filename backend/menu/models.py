@@ -3,7 +3,7 @@ from django.db import models
 
 class Pizza(models.Model):
     name = models.CharField(max_length=255)
-    description = models.TextField()
+    description = models.TextField(blank=True, default='')
     base_price = models.DecimalField(max_digits=10, decimal_places=2)
     image_url = models.ImageField(upload_to='pizzas/', blank=True, null=True)
     is_available = models.BooleanField(default=True)

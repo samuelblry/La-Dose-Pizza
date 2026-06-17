@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext'
 import { apiAdminPizzas, apiAdminCreatePizza, apiAdminPatchPizza, apiAdminDeletePizza, MEDIA_BASE } from '../../services/api'
 import AdminLayout, { SearchBar } from '../../components/AdminLayout'
 import { Vide } from './Orders'
+import { INGREDIENTS_PAR_CATEGORIE } from '../../data/ingredients'
 
 export default function ManageMenu() {
   const { token } = useAuth()
@@ -10,15 +11,30 @@ export default function ManageMenu() {
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const [ajout, setAjout] = useState(false)
+  const [ingredientsCoches, setIngredientsCoches] = useState([])
   const [confirmSuppr, setConfirmSuppr] = useState(null)
   const [busy, setBusy] = useState(null)
   const [recherche, setRecherche] = useState('')
+
+  const toggleIng = (nom) =>
+    setIngredientsCoches((prev) =>
+      prev.includes(nom) ? prev.filter((x) => x !== nom) : [...prev, nom],
+    )
+
+  const fermerFormulaire = () => {
+    setAjout(false)
+    setIngredientsCoches([])
+  }
 
   const liste = useMemo(() => {
     const q = recherche.trim().toLowerCase()
     if (!q) return pizzas
     return pizzas.filter(
-      (p) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q),
+      (p) =>
+        p.name?.toLowerCase().includes(q) ||
+        (p.ingredients || []).some((i) =>
+          (typeof i === 'string' ? i : i?.name)?.toLowerCase().includes(q),
+        ),
     )
   }, [pizzas, recherche])
 
@@ -40,10 +56,12 @@ export default function ManageMenu() {
     if (f.get('image_url') && f.get('image_url').size === 0) {
       f.delete('image_url')
     }
+    ingredientsCoches.forEach((ing) => f.append('ingredients', ing))
     try {
       const pizza = await apiAdminCreatePizza(token, f)
       setPizzas((prev) => [pizza, ...prev])
       e.target.reset()
+      setIngredientsCoches([])
       setAjout(false)
     } catch {
       setErreur("Échec de l'ajout de la pizza.")
@@ -103,15 +121,48 @@ export default function ManageMenu() {
             <h2 className="mb-4 font-poppins text-base font-semibold text-ambre">Nouvelle pizza</h2>
             <div className="space-y-4">
               <Field label="Nom" name="name" placeholder="Margherita" required />
-              <label className="block">
-                <span className="mb-1.5 block font-poppins text-[0.66rem] uppercase tracking-[0.15em] text-creme/50">Description</span>
-                <textarea
-                  name="description"
-                  rows={2}
-                  placeholder="Tomate, mozzarella, basilic frais…"
-                  className="w-full resize-none rounded-xl border border-white/10 bg-dark px-4 py-3 font-poppins text-sm text-creme placeholder-creme/30 focus:border-ambre/50 focus:outline-none"
-                />
-              </label>
+
+              {/* Sélection des ingrédients */}
+              <div>
+                <span className="mb-2 block font-poppins text-[0.66rem] uppercase tracking-[0.15em] text-creme/50">
+                  Ingrédients
+                  {ingredientsCoches.length > 0 && (
+                    <span className="ml-2 rounded-full bg-rouge px-2 py-0.5 text-[0.6rem] text-creme">
+                      {ingredientsCoches.length} sélectionné{ingredientsCoches.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </span>
+                <div className="space-y-3 rounded-xl border border-white/10 bg-dark p-4">
+                  {INGREDIENTS_PAR_CATEGORIE.map((cat) => (
+                    <div key={cat.label}>
+                      <p className="mb-1.5 font-poppins text-[0.58rem] uppercase tracking-[0.18em] text-ambre/60">
+                        {cat.label}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {cat.items.map((ing) => {
+                          const coche = ingredientsCoches.includes(ing)
+                          return (
+                            <button
+                              key={ing}
+                              type="button"
+                              onClick={() => toggleIng(ing)}
+                              className={`rounded-full border px-2.5 py-1 font-poppins text-[0.68rem] transition ${
+                                coche
+                                  ? 'border-rouge bg-rouge text-creme'
+                                  : 'border-white/15 text-creme/60 hover:border-white/40 hover:text-creme/90'
+                              }`}
+                            >
+                              {coche && <span className="mr-1 text-[0.6rem]">✓</span>}
+                              {ing}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Prix (€)" name="base_price" type="number" step="0.01" placeholder="12.50" required />
                 <Field label="Image de la pizza" name="image_url" type="file" accept="image/*" />
@@ -121,7 +172,7 @@ export default function ManageMenu() {
               <button type="submit" className="flex-1 rounded-xl bg-rouge py-3 font-poppins text-[0.78rem] font-semibold text-creme transition hover:bg-rouge/90">
                 Ajouter
               </button>
-              <button type="button" onClick={() => setAjout(false)} className="flex-1 rounded-xl border border-white/15 py-3 font-poppins text-[0.78rem] text-creme/70 transition hover:border-creme hover:text-creme">
+              <button type="button" onClick={fermerFormulaire} className="flex-1 rounded-xl border border-white/15 py-3 font-poppins text-[0.78rem] text-creme/70 transition hover:border-creme hover:text-creme">
                 Annuler
               </button>
             </div>

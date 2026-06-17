@@ -44,6 +44,14 @@ def orders(request):
     if use_points > request.user.loyalty_points:
         return Response({'error': 'Points de fidélité insuffisants'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # Frais de livraison envoyés par le front (0 si sur place ou panier >= seuil offert)
+    try:
+        delivery_fee = Decimal(str(request.data.get('delivery_fee', '0')))
+        if delivery_fee < Decimal('0'):
+            delivery_fee = Decimal('0')
+    except Exception:
+        delivery_fee = Decimal('0')
+
     total = Decimal('0.00')
     lignes = []
 
@@ -86,13 +94,15 @@ def orders(request):
         discount = Decimal(use_points) * Decimal('0.10')
 
     montant_brut = total
-    total -= discount
+    # total = pizzas + livraison - réduction fidélité
+    total = total + delivery_fee - discount
 
     commande = CustomerOrder.objects.create(
         user=request.user,
         invoice_number=_generer_numero_facture(),
         total_amount=total,
         gross_amount=montant_brut,
+        delivery_fee=delivery_fee,
         points_used=use_points,
         order_type=request.data.get('order_type', 'livraison'),
         street=request.data.get('street', ''),
@@ -314,8 +324,17 @@ def order_invoice(request, pk):
         y_tableau -= 15
 
     ligne_total('Sous-total HT', total_ht)
-    ligne_total(f'TVA (10% restauration)', tva_montant)
+    ligne_total('TVA (10% restauration)', tva_montant)
     ligne_total('Total TTC', total_ttc_avant_remise)
+
+    # Frais de livraison
+    if commande.delivery_fee and commande.delivery_fee > 0:
+        y_tableau -= 4
+        set_fill(DARK)
+        c.setFont('Helvetica', 8)
+        c.drawRightString(col_tot - 10, y_tableau, 'Frais de livraison')
+        c.drawString(col_tot, y_tableau, f'+{commande.delivery_fee:.2f} €')
+        y_tableau -= 15
 
     if commande.points_used > 0:
         remise = (Decimal(commande.points_used) * Decimal('0.10')).quantize(Decimal('0.01'))
