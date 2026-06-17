@@ -59,9 +59,9 @@ export default function Login() {
         </SubmitButton>
       </form>
 
-      <p className="mt-6 text-center font-poppins text-[0.82rem] text-creme/50">
+      <p className="mt-6 text-center font-poppins text-[0.82rem] text-dark/50">
         Pas encore de compte ?{' '}
-        <Link to="/inscription" className="font-medium text-ambre hover:underline">
+        <Link to="/inscription" className="font-medium text-rouge hover:underline">
           Créer un compte
         </Link>
       </p>

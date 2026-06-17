@@ -1,12 +1,15 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import CartDrawer from './components/CartDrawer'
 import Home from './pages/Home'
 import Menu from './pages/Menu'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
+import Payment from './pages/Payment'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Account from './pages/Account'
@@ -16,6 +19,16 @@ import ManageMenu from './pages/admin/ManageMenu'
 import Orders from './pages/admin/Orders'
 import Clients from './pages/admin/Clients'
 import Reservations from './pages/admin/Reservations'
+import SuperAdmin from './pages/admin/SuperAdmin'
+
+// Remonte en haut de page à chaque changement de route
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
 
 // Redirige vers /connexion si pas connecté, en mémorisant la page voulue
 function ProtectedRoute({ children }) {
@@ -39,7 +52,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
+          <ScrollToTop />
           <Navbar />
+          <CartDrawer />
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/menu" element={<Menu />} />
@@ -49,6 +64,7 @@ export default function App() {
 
             {/* Pages nécessitant d'être connecté */}
             <Route path="/commander" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/paiement" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
             <Route path="/reservation" element={<ProtectedRoute><Reservation /></ProtectedRoute>} />
             <Route path="/mon-compte" element={<ProtectedRoute><Account /></ProtectedRoute>} />
 
@@ -58,6 +74,9 @@ export default function App() {
             <Route path="/admin/commandes" element={<AdminRoute><Orders /></AdminRoute>} />
             <Route path="/admin/clients" element={<AdminRoute><Clients /></AdminRoute>} />
             <Route path="/admin/reservations" element={<AdminRoute><Reservations /></AdminRoute>} />
+
+            {/* Accès Admin Global pour test via URL directe */}
+            <Route path="/super-admin" element={<SuperAdmin />} />
           </Routes>
           <Footer />
         </CartProvider>

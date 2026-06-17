@@ -3,55 +3,27 @@ import { useState } from 'react'
 // Coquille commune aux pages Connexion / Inscription
 export function AuthLayout({ surtitre, titre, sousTitre, children }) {
   return (
-    <main className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-dark px-5 py-16 lg:flex-row lg:items-stretch lg:gap-0 lg:p-0">
-      {/* halos chauds décoratifs */}
-      <div className="pointer-events-none absolute -top-32 -right-24 h-80 w-80 rounded-full bg-rouge/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full bg-ambre/10 blur-3xl" />
-      <img
-        src="/img/element/pizza_qui_vole.png"
-        alt=""
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-16 top-10 w-56 rotate-12 opacity-10 md:w-72 lg:hidden"
-      />
-
-      {/* panneau de marque — desktop uniquement */}
-      <aside className="relative hidden w-1/2 flex-col justify-center overflow-hidden bg-gradient-to-br from-[#3a0a04] to-dark px-14 lg:flex">
-        <img
-          src="/img/background/background_pizza_hero.webp"
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.07]"
-        />
-        <div className="pointer-events-none absolute -right-20 top-16 h-72 w-72 rounded-full bg-rouge/20 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-dark to-transparent" />
-        <div className="relative max-w-md">
-          <img src="/img/logo/logo_long.svg" alt="La Dose Pizza" className="w-60" />
-          <p className="mt-4 font-poppins text-xs uppercase tracking-[0.3em] text-ambre">
-            Finger-Licking Good
+    <main className="min-h-screen bg-creme pb-32 lg:pb-20">
+      <header className="relative overflow-hidden bg-dark px-6 pt-28 pb-16 text-center lg:pt-32 lg:pb-20">
+        <div className="pointer-events-none absolute -left-24 -top-10 h-72 w-72 rounded-full bg-rouge/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-ambre/15 blur-3xl" />
+        <div className="relative mx-auto max-w-xl lg:mx-0 lg:max-w-2xl lg:px-8 lg:text-center">
+          <p className="mb-3 font-poppins text-[0.7rem] uppercase tracking-[0.32em] text-ambre">
+            {surtitre}
           </p>
-          <p className="mt-7 max-w-sm font-poppins text-sm leading-relaxed text-creme/70">
-            Des pizzas cuites au feu de bois, préparées avec des produits frais.
-          </p>
-          <ul className="mt-8 space-y-4">
-            <Atout>Commandez en quelques clics</Atout>
-            <Atout>Réservez votre table en ligne</Atout>
-            <Atout>Cumulez des points de fidélité</Atout>
-          </ul>
-        </div>
-      </aside>
-
-      <div className="relative flex w-full max-w-md items-center justify-center lg:w-1/2 lg:max-w-none lg:px-8 lg:py-28">
-        <div className="w-full max-w-md rounded-3xl border border-ambre/20 bg-gradient-to-br from-[#3a0a04] to-[#240400] p-7 shadow-2xl shadow-black/40 sm:p-9 lg:p-10">
-          <header className="mb-7 text-center">
-            <p className="mb-2 font-poppins text-[0.62rem] uppercase tracking-[0.3em] text-ambre">
-              {surtitre}
+          <h1 className="font-lostar text-[2.9rem] leading-[0.95] text-creme lg:text-[4.6rem]">
+            {titre}
+          </h1>
+          {sousTitre && (
+            <p className="mx-auto mt-4 max-w-md font-poppins text-[0.85rem] text-creme/60 lg:text-base">
+              {sousTitre}
             </p>
-            <h1 className="font-lostar text-[2.4rem] leading-none text-rouge">{titre}</h1>
-            {sousTitre && (
-              <p className="mt-3 font-poppins text-[0.82rem] text-creme/60">{sousTitre}</p>
-            )}
-          </header>
+          )}
+        </div>
+      </header>
 
+      <div className="relative z-10 mx-auto -mt-8 max-w-md px-5 lg:-mt-12 lg:max-w-lg">
+        <div className="rounded-3xl bg-white p-7 shadow-[0_4px_30px_-14px_rgba(26,2,0,0.15)] ring-1 ring-dark/5 sm:p-9 lg:p-10">
           {children}
         </div>
       </div>
@@ -63,26 +35,27 @@ export function AuthLayout({ surtitre, titre, sousTitre, children }) {
 export function Field({ label, icon, hint, error, ...props }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block font-poppins text-[0.78rem] font-medium text-creme/80">
+      <span className="mb-1.5 block font-poppins text-[0.66rem] uppercase tracking-[0.15em] text-dark/60">
         {label}
+        {props.required && <span className="text-rouge"> *</span>}
       </span>
       <span className="relative block">
         {icon && (
-          <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ambre/70">
+          <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-dark/40">
             {icon}
           </span>
         )}
         <input
           {...props}
-          className={`w-full rounded-xl border bg-dark/60 py-3 text-creme placeholder-creme/30 transition focus:outline-none focus:ring-2 focus:ring-ambre/40 ${
-            icon ? 'pl-11 pr-4' : 'px-4'
-          } ${error ? 'border-rouge' : 'border-creme/15 focus:border-ambre/60'}`}
+          className={`w-full rounded-xl border bg-creme/30 py-3 text-dark placeholder-dark/30 transition focus:outline-none focus:ring-2 focus:ring-rouge/30 ${
+            icon ? 'pl-12 pr-4' : 'px-4'
+          } ${error ? 'border-rouge/50' : 'border-dark/10 focus:border-rouge/50'}`}
         />
       </span>
       {error ? (
         <span className="mt-1.5 block font-poppins text-[0.74rem] text-rouge">{error}</span>
       ) : hint ? (
-        <span className="mt-1.5 block font-poppins text-[0.74rem] text-creme/45">{hint}</span>
+        <span className="mt-1.5 block font-poppins text-[0.74rem] text-dark/40">{hint}</span>
       ) : null}
     </label>
   )
@@ -93,25 +66,26 @@ export function PasswordField({ label, hint, error, ...props }) {
   const [visible, setVisible] = useState(false)
   return (
     <label className="block">
-      <span className="mb-1.5 block font-poppins text-[0.78rem] font-medium text-creme/80">
+      <span className="mb-1.5 block font-poppins text-[0.66rem] uppercase tracking-[0.15em] text-dark/60">
         {label}
+        {props.required && <span className="text-rouge"> *</span>}
       </span>
       <span className="relative block">
-        <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ambre/70">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-dark/40">
           <IconLock />
         </span>
         <input
           {...props}
           type={visible ? 'text' : 'password'}
-          className={`w-full rounded-xl border bg-dark/60 py-3 pl-11 pr-11 text-creme placeholder-creme/30 transition focus:outline-none focus:ring-2 focus:ring-ambre/40 ${
-            error ? 'border-rouge' : 'border-creme/15 focus:border-ambre/60'
+          className={`w-full rounded-xl border bg-creme/30 py-3 pl-12 pr-12 text-dark placeholder-dark/30 transition focus:outline-none focus:ring-2 focus:ring-rouge/30 ${
+            error ? 'border-rouge/50' : 'border-dark/10 focus:border-rouge/50'
           }`}
         />
         <button
           type="button"
           onClick={() => setVisible((v) => !v)}
           aria-label={visible ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-creme/50 transition hover:text-ambre"
+          className="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-dark/40 transition hover:text-dark/70"
         >
           {visible ? <IconEyeOff /> : <IconEye />}
         </button>
@@ -119,7 +93,7 @@ export function PasswordField({ label, hint, error, ...props }) {
       {error ? (
         <span className="mt-1.5 block font-poppins text-[0.74rem] text-rouge">{error}</span>
       ) : hint ? (
-        <span className="mt-1.5 block font-poppins text-[0.74rem] text-creme/45">{hint}</span>
+        <span className="mt-1.5 block font-poppins text-[0.74rem] text-dark/40">{hint}</span>
       ) : null}
     </label>
   )
@@ -131,7 +105,7 @@ export function SubmitButton({ loading, children, loadingLabel }) {
     <button
       type="submit"
       disabled={loading}
-      className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl bg-rouge py-3 font-poppins font-semibold text-creme transition hover:bg-rouge/90 disabled:cursor-not-allowed disabled:opacity-60"
+      className="mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl bg-rouge px-6 py-4 font-poppins text-[0.82rem] font-semibold uppercase tracking-[0.1em] text-creme shadow-lg shadow-rouge/25 transition hover:bg-rouge/90 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {loading && <Spinner />}
       {loading ? loadingLabel : children}
@@ -146,25 +120,11 @@ export function ErrorBanner({ message }) {
     <p
       role="alert"
       aria-live="polite"
-      className="mb-5 flex items-center gap-2 rounded-xl border border-rouge/40 bg-rouge/10 px-4 py-3 font-poppins text-[0.8rem] text-rouge"
+      className="mb-6 flex items-center gap-2 rounded-2xl border border-rouge/20 bg-rouge/10 px-5 py-4 font-poppins text-[0.8rem] text-rouge shadow-sm"
     >
       <IconAlert />
       <span>{message}</span>
     </p>
-  )
-}
-
-// Puce d'atout (panneau de marque desktop)
-function Atout({ children }) {
-  return (
-    <li className="flex items-center gap-3 font-poppins text-sm text-creme/85">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ambre/15 text-ambre">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 6 9 17l-5-5" />
-        </svg>
-      </span>
-      {children}
-    </li>
   )
 }
 

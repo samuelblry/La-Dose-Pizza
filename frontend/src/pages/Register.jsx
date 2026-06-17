@@ -112,9 +112,9 @@ export default function Register() {
         </SubmitButton>
       </form>
 
-      <p className="mt-6 text-center font-poppins text-[0.82rem] text-creme/50">
+      <p className="mt-6 text-center font-poppins text-[0.82rem] text-dark/50">
         Déjà un compte ?{' '}
-        <Link to="/connexion" className="font-medium text-ambre hover:underline">
+        <Link to="/connexion" className="font-medium text-rouge hover:underline">
           Se connecter
         </Link>
       </p>

@@ -9,6 +9,11 @@ export function CartProvider({ children }) {
     return saved ? JSON.parse(saved) : []
   })
 
+  // Ouverture du mini-panier latéral
+  const [isOpen, setIsOpen] = useState(false)
+  const openCart = () => setIsOpen(true)
+  const closeCart = () => setIsOpen(false)
+
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(items))
   }, [items])
@@ -44,7 +49,7 @@ export function CartProvider({ children }) {
   const total = items.reduce((n, i) => n + i.base_price * i.qty, 0)
 
   return (
-    <CartContext.Provider value={{ items, addItem, decItem, removeItem, clear, count, total }}>
+    <CartContext.Provider value={{ items, addItem, decItem, removeItem, clear, count, total, isOpen, openCart, closeCart }}>
       {children}
     </CartContext.Provider>
   )
