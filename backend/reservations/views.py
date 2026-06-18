@@ -7,7 +7,7 @@ from .serializers import ReservationSerializer, RestaurantTableSerializer
 
 
 def _is_admin(request):
-    return request.user.is_authenticated and request.user.is_admin
+    return request.user.is_authenticated and (request.user.is_admin or request.user.is_staff)
 
 
 @api_view(['GET', 'POST'])

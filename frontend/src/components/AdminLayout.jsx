@@ -27,6 +27,11 @@ const TABS = [
     label: 'Réservations',
     icon: <path strokeLinecap="round" strokeLinejoin="round" d="M8 3v4M16 3v4M4 9h16M5 5h14a1 1 0 011 1v13a1 1 0 01-1 1H5a1 1 0 01-1-1V6a1 1 0 011-1z" />,
   },
+  {
+    to: '/admin/compte',
+    label: 'Mon compte',
+    icon: <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />,
+  },
 ]
 
 // Coquille commune des pages staff : en-tête + nav par onglets (mobile-first)

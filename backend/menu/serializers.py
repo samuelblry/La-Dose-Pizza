@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Pizza, Drink, Dessert, Ingredient
+from .models import Pizza, Ingredient
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -21,15 +21,3 @@ class PizzaSerializer(serializers.ModelSerializer):
         return list(set(
             Allergen.objects.filter(ingredients__pizzas=obj).values_list('name', flat=True)
         ))
-
-
-class DrinkSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Drink
-        fields = ['id', 'name', 'volume_cl', 'price', 'is_available']
-
-
-class DessertSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Dessert
-        fields = ['id', 'name', 'price', 'is_available']

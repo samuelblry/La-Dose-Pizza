@@ -37,11 +37,7 @@ def create_payment_intent(request):
         },
     )
 
-    return Response({
-        'client_secret': intent.client_secret,
-        'public_key': settings.STRIPE_PUBLIC_KEY,
-        'amount': str(commande.total_amount),
-    })
+    return Response({'client_secret': intent.client_secret})
 
 
 @csrf_exempt
@@ -69,14 +65,10 @@ def stripe_webhook(request):
         if order_id:
             try:
                 commande = CustomerOrder.objects.get(pk=order_id)
+                # Le paiement confirme la commande ; les points sont crédités à la livraison
                 if commande.status == 'en_attente':
                     commande.status = 'en_preparation'
                     commande.save()
-                    # Points de fidélité : 1 pt par euro sur le montant brut
-                    user = commande.user
-                    base = commande.gross_amount if commande.gross_amount else commande.total_amount
-                    user.loyalty_points += int(base)
-                    user.save()
             except CustomerOrder.DoesNotExist:
                 pass
 

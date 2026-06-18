@@ -1,6 +1,10 @@
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function Footer() {
+  const { isAdmin, isSuperAdmin, isStaff } = useAuth()
+  // Liens orientés client masqués pour le staff (cohérent avec la navbar)
+  const estStaff = isAdmin || isSuperAdmin || isStaff
   return (
     <footer className="bg-dark px-7 pb-28 pt-14 text-creme lg:px-8 lg:pb-14 lg:pt-20">
       <div className="mx-auto max-w-6xl">
@@ -17,9 +21,13 @@ export default function Footer() {
               <h4 className="font-lostar text-xl text-ambre">Le restaurant</h4>
               <ul className="mt-3 space-y-2 font-poppins text-sm text-creme/80">
                 <li><Link to="/menu" className="transition hover:text-ambre">Notre carte</Link></li>
-                <li><Link to="/panier" className="transition hover:text-ambre">Commander en ligne</Link></li>
-                <li><Link to="/reservation" className="transition hover:text-ambre">Réserver une table</Link></li>
-                <li><Link to="/mon-compte" className="transition hover:text-ambre">Points de fidélité</Link></li>
+                {!estStaff && (
+                  <>
+                    <li><Link to="/panier" className="transition hover:text-ambre">Commander en ligne</Link></li>
+                    <li><Link to="/reservation" className="transition hover:text-ambre">Réserver une table</Link></li>
+                    <li><Link to="/mon-compte" className="transition hover:text-ambre">Points de fidélité</Link></li>
+                  </>
+                )}
               </ul>
             </div>
             <div>

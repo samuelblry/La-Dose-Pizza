@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { apiMe, apiOrders, apiReservations, apiLogout, apiUpdateMe, apiChangePassword, apiDeleteMe, apiCancelReservation, MEDIA_BASE } from '../services/api'
+import { apiMe, apiOrders, apiReservations, apiLogout, apiUpdateMe, apiChangePassword, apiDeleteMe, apiCancelReservation, apiDownloadInvoice } from '../services/api'
 
 // Libellé + style pour chaque statut de commande (thème clair)
 const STATUTS = {
@@ -45,11 +45,7 @@ export default function Account() {
   async function telechargerFacture(orderId, invoiceNumber) {
     setTelechargement(orderId)
     try {
-      const res = await fetch(`${MEDIA_BASE}/api/orders/${orderId}/invoice/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (!res.ok) throw new Error('Erreur')
-      const blob = await res.blob()
+      const blob = await apiDownloadInvoice(orderId)
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url

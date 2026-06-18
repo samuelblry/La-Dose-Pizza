@@ -1,12 +1,20 @@
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .models import UserAccount, Address
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from .models import UserAccount, Address, LoginLog
 from .serializers import RegisterSerializer, UserProfileSerializer, AdminClientSerializer
 from orders.models import CustomerOrder
+
+
+# Limite les tentatives de connexion par IP
+class LoginRateThrottle(AnonRateThrottle):
+    scope = 'login'
 
 
 @api_view(['POST'])
@@ -21,18 +29,24 @@ def register(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([LoginRateThrottle])
 def login(request):
     email = request.data.get('email')
     password = request.data.get('password')
     user = authenticate(request, username=email, password=password)
     if not user:
         return Response({'error': 'Identifiants invalides'}, status=status.HTTP_401_UNAUTHORIZED)
+    ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR', '')
+    if ip and ',' in ip:
+        ip = ip.split(',')[0].strip()
+    LoginLog.objects.create(user=user, ip_address=ip or None)
     refresh = RefreshToken.for_user(user)
     return Response({
         'token': str(refresh.access_token),
         'refresh': str(refresh),
         'is_admin': user.is_admin,
         'is_superadmin': user.is_superadmin,
+        'is_staff': user.is_staff,
     })
 
 
@@ -57,6 +71,11 @@ def me(request):
         return Response(UserProfileSerializer(user).data)
 
     if request.method == 'PATCH':
+        nouvel_email = request.data.get('email')
+        if nouvel_email and nouvel_email != user.email and \
+                UserAccount.objects.filter(email=nouvel_email).exclude(pk=user.pk).exists():
+            return Response({'error': 'Cet email est déjà utilisé'}, status=status.HTTP_400_BAD_REQUEST)
+
         champs_user = ('first_name', 'last_name', 'email', 'phone')
         for champ in champs_user:
             if champ in request.data:
@@ -92,13 +111,13 @@ def me_password(request):
             {'error': 'current_password et new_password requis'},
             status=status.HTTP_400_BAD_REQUEST,
         )
-    if len(new) < 6:
-        return Response(
-            {'error': 'Le nouveau mot de passe doit faire au moins 6 caractères'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
 
     user = request.user
+    try:
+        validate_password(new, user)
+    except DjangoValidationError as e:
+        return Response({'error': ' '.join(e.messages)}, status=status.HTTP_400_BAD_REQUEST)
+
     if not user.check_password(current):
         return Response(
             {'error': 'Mot de passe actuel incorrect'},
@@ -113,7 +132,7 @@ def me_password(request):
 # --- vues admin ---
 
 def _check_admin(request):
-    return request.user.is_authenticated and request.user.is_admin
+    return request.user.is_authenticated and (request.user.is_admin or request.user.is_staff)
 
 
 @api_view(['GET'])
@@ -126,7 +145,7 @@ def admin_stats(request):
     today = timezone.now().date()
     orders_today = CustomerOrder.objects.filter(order_date__date=today).count()
     pending_reservations = Reservation.objects.filter(status='en_attente').count()
-    total_clients = UserAccount.objects.filter(is_admin=False).count()
+    total_clients = UserAccount.objects.filter(is_staff=False, is_admin=False).count()
     return Response({
         'orders_today': orders_today,
         'pending_reservations': pending_reservations,

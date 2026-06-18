@@ -2,8 +2,8 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from .models import Pizza, Drink, Dessert, Ingredient, PizzaRecipe, Allergen, HasAllergen
-from .serializers import PizzaSerializer, DrinkSerializer, DessertSerializer
+from .models import Pizza, Ingredient, PizzaRecipe, Allergen, HasAllergen
+from .serializers import PizzaSerializer
 
 # Mapping ingrédient → allergènes (EU-14), miroir de frontend/src/data/ingredients.js
 _ALLERGENES = {
@@ -107,17 +107,3 @@ def pizza_detail(request, pk):
 
     pizza.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def drinks(request):
-    qs = Drink.objects.filter(is_available=True)
-    return Response(DrinkSerializer(qs, many=True).data)
-
-
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def desserts(request):
-    qs = Dessert.objects.filter(is_available=True)
-    return Response(DessertSerializer(qs, many=True).data)

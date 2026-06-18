@@ -7,7 +7,7 @@ import { apiLogout } from '../services/api'
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [open, setOpen] = useState(false)
-  const { isLoggedIn, isAdmin, isSuperAdmin, logout, token } = useAuth()
+  const { isLoggedIn, isAdmin, isSuperAdmin, isStaff, logout, token } = useAuth()
   const { count } = useCart()
   const navigate = useNavigate()
 
@@ -47,8 +47,8 @@ export default function Navbar() {
         {/* navigation horizontale desktop */}
         <nav className="hidden items-center gap-7 lg:flex">
           <DeskLink to="/menu">LA CARTE</DeskLink>
-          {isLoggedIn && !isAdmin && !isSuperAdmin && <DeskLink to="/reservation">RESERVER</DeskLink>}
-          {!isAdmin && !isSuperAdmin && (
+          {isLoggedIn && !isAdmin && !isSuperAdmin && !isStaff && <DeskLink to="/reservation">RESERVER</DeskLink>}
+          {!isAdmin && !isSuperAdmin && !isStaff && (
             <Link
               to="/panier"
               aria-label="Mon panier"
@@ -68,8 +68,8 @@ export default function Navbar() {
           )}
           {isLoggedIn ? (
             <>
-              <DeskLink to={isSuperAdmin ? '/super-admin' : isAdmin ? '/admin' : '/mon-compte'}>
-                {isSuperAdmin || isAdmin ? 'DASHBOARD' : 'MON COMPTE'}
+              <DeskLink to={isSuperAdmin ? '/super-admin' : (isAdmin || isStaff) ? '/admin' : '/mon-compte'}>
+                {isSuperAdmin || isAdmin || isStaff ? 'DASHBOARD' : 'MON COMPTE'}
               </DeskLink>
             </>
           ) : (
@@ -117,7 +117,7 @@ export default function Navbar() {
             </button>
 
             <NavLink to="/menu" onClick={() => setOpen(false)}>La carte</NavLink>
-            {!isAdmin && !isSuperAdmin && (
+            {!isAdmin && !isSuperAdmin && !isStaff && (
               <NavLink to="/panier" onClick={() => setOpen(false)} badge={count}>Mon panier</NavLink>
             )}
 
@@ -125,7 +125,7 @@ export default function Navbar() {
               <>
                 {isSuperAdmin ? (
                   <NavLink to="/super-admin" onClick={() => setOpen(false)}>Dashboard</NavLink>
-                ) : isAdmin ? (
+                ) : (isAdmin || isStaff) ? (
                   <NavLink to="/admin" onClick={() => setOpen(false)}>Dashboard</NavLink>
                 ) : (
                   <>

@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import UserAccount, Address
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from .models import UserAccount, Address, LoginLog
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -8,6 +10,13 @@ class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserAccount
         fields = ['email', 'password', 'phone', 'first_name', 'last_name']
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
 
     def create(self, validated_data):
         return UserAccount.objects.create_user(**validated_data)
@@ -45,3 +54,28 @@ class AdminClientSerializer(serializers.ModelSerializer):
         if adresse:
             return AddressSerializer(adresse).data
         return None
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    last_login_at = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserAccount
+        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'is_admin', 'is_superadmin', 'last_login_at']
+
+    def get_last_login_at(self, obj):
+        log = obj.login_logs.first()
+        return log.timestamp.isoformat() if log else None
+
+
+class LoginLogSerializer(serializers.ModelSerializer):
+    user_email = serializers.CharField(source='user.email', read_only=True)
+    user_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LoginLog
+        fields = ['id', 'user_email', 'user_name', 'timestamp', 'ip_address']
+
+    def get_user_name(self, obj):
+        name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return name or obj.user.email

@@ -48,3 +48,12 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.street}, {self.city}"
+
+
+class LoginLog(models.Model):
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='login_logs')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.CharField(max_length=50, blank=True, null=True)
+
+    class Meta:
+        ordering = ['-timestamp']

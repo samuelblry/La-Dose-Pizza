@@ -30,6 +30,8 @@ class CustomerOrder(models.Model):
     city = models.CharField(max_length=255, blank=True)
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='orders')
     points_used = models.IntegerField(default=0)
+    # points fidélité déjà crédités sur cette commande (évite le double crédit)
+    points_credited = models.BooleanField(default=False)
 
     def __str__(self):
         return self.invoice_number

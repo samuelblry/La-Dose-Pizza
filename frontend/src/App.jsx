@@ -20,6 +20,7 @@ import Orders from './pages/admin/Orders'
 import Clients from './pages/admin/Clients'
 import Reservations from './pages/admin/Reservations'
 import SuperAdmin from './pages/admin/SuperAdmin'
+import AdminAccount from './pages/admin/AdminAccount'
 
 // Remonte en haut de page à chaque changement de route
 function ScrollToTop() {
@@ -40,10 +41,10 @@ function ProtectedRoute({ children }) {
 
 // Réservé au staff : non connecté → connexion, connecté mais pas admin → accueil
 function AdminRoute({ children }) {
-  const { isLoggedIn, isAdmin } = useAuth()
+  const { isLoggedIn, isAdmin, isStaff } = useAuth()
   const location = useLocation()
   if (!isLoggedIn) return <Navigate to="/connexion" state={{ from: location.pathname }} replace />
-  if (!isAdmin) return <Navigate to="/" replace />
+  if (!isAdmin && !isStaff) return <Navigate to="/" replace />
   return children
 }
 
@@ -83,6 +84,7 @@ export default function App() {
             <Route path="/admin/commandes" element={<AdminRoute><Orders /></AdminRoute>} />
             <Route path="/admin/clients" element={<AdminRoute><Clients /></AdminRoute>} />
             <Route path="/admin/reservations" element={<AdminRoute><Reservations /></AdminRoute>} />
+            <Route path="/admin/compte" element={<AdminRoute><AdminAccount /></AdminRoute>} />
 
             {/* Espace superadmin — réservé au superadmin */}
             <Route path="/super-admin" element={<SuperAdminRoute><SuperAdmin /></SuperAdminRoute>} />

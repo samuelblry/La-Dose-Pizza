@@ -13,8 +13,13 @@ from .serializers import OrderSerializer
 from menu.models import Pizza, Drink, Dessert
 
 
+# Frais de livraison fixés côté serveur (offerts sur place ou au-delà du seuil)
+FRAIS_LIVRAISON = Decimal('2.90')
+SEUIL_OFFERT = Decimal('25')
+
+
 def _is_admin(request):
-    return request.user.is_authenticated and request.user.is_admin
+    return request.user.is_authenticated and (request.user.is_admin or request.user.is_staff)
 
 
 def _generer_numero_facture():
@@ -44,13 +49,7 @@ def orders(request):
     if use_points > request.user.loyalty_points:
         return Response({'error': 'Points de fidélité insuffisants'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Frais de livraison envoyés par le front (0 si sur place ou panier >= seuil offert)
-    try:
-        delivery_fee = Decimal(str(request.data.get('delivery_fee', '0')))
-        if delivery_fee < Decimal('0'):
-            delivery_fee = Decimal('0')
-    except Exception:
-        delivery_fee = Decimal('0')
+    order_type = request.data.get('order_type', 'livraison')
 
     total = Decimal('0.00')
     lignes = []
@@ -87,6 +86,12 @@ def orders(request):
         if prix_unitaire is not None:
             total += prix_unitaire * qte
 
+    # Frais de livraison calculés côté serveur, jamais d'après une valeur envoyée par le client
+    if order_type == 'sur_place' or total >= SEUIL_OFFERT:
+        delivery_fee = Decimal('0')
+    else:
+        delivery_fee = FRAIS_LIVRAISON
+
     discount = Decimal(use_points) * Decimal('0.10')
     if discount > total:
         max_points = int(total / Decimal('0.10'))
@@ -104,7 +109,7 @@ def orders(request):
         gross_amount=montant_brut,
         delivery_fee=delivery_fee,
         points_used=use_points,
-        order_type=request.data.get('order_type', 'livraison'),
+        order_type=order_type,
         street=request.data.get('street', ''),
         zip_code=request.data.get('zip_code', ''),
         city=request.data.get('city', ''),
@@ -418,15 +423,16 @@ def admin_order_detail(request, pk):
     if nouveau_status not in statuts_valides:
         return Response({'error': 'Statut invalide'}, status=400)
 
-    ancien_status = commande.status
     commande.status = nouveau_status
     commande.save()
 
-    # points de fidélité : 1 pt par euro sur le montant brut, à la livraison
-    if nouveau_status == 'livree' and ancien_status != 'livree':
+    # points de fidélité : 1 pt par euro sur le montant brut, une seule fois à la livraison
+    if nouveau_status == 'livree' and not commande.points_credited:
         user = commande.user
         base = commande.gross_amount if commande.gross_amount else commande.total_amount
         user.loyalty_points += int(base)
         user.save()
+        commande.points_credited = True
+        commande.save(update_fields=['points_credited'])
 
     return Response(OrderSerializer(commande).data)

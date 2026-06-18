@@ -19,10 +19,10 @@ export default function Login() {
     const form = new FormData(e.target)
     try {
       const data = await apiLogin(form.get('email'), form.get('password'))
-      login(data.token, data.refresh, data.is_admin, data.is_superadmin)
+      login(data.token, data.refresh, data.is_admin, data.is_superadmin, data.is_staff)
       if (data.is_superadmin) {
         navigate('/super-admin')
-      } else if (data.is_admin) {
+      } else if (data.is_admin || data.is_staff) {
         navigate('/admin')
       } else {
         navigate(redirectTo)
