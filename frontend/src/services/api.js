@@ -1,7 +1,7 @@
-const BASE = 'http://localhost:8000/api'
+const BASE = `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api`
 
 // Racine pour les fichiers media Django (images uploadées)
-export const MEDIA_BASE = 'http://localhost:8000'
+export const MEDIA_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 const headers = (token) => ({
   'Content-Type': 'application/json',
