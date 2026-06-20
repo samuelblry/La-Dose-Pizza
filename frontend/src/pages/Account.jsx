@@ -18,6 +18,16 @@ const STATUTS_RESA = {
   annulee: { label: 'Annulée', dot: 'bg-rouge', text: 'text-rouge' },
 }
 
+// Adapte le libellé du statut au mode "sur place" (pas de livraison)
+const statutCommande = (status, type) => {
+  const base = STATUTS[status] || STATUTS.en_attente
+  if (type === 'sur_place') {
+    if (status === 'en_livraison') return { ...base, label: 'Prête' }
+    if (status === 'livree') return { ...base, label: 'Récupérée' }
+  }
+  return base
+}
+
 const fmtDate = (d) => {
   if (!d) return ''
   const date = new Date(d)
@@ -357,7 +367,7 @@ export default function Account() {
                     <>
                       <ul className="space-y-3">
                         {orders.slice(0, ordersLimit).map((order) => {
-                          const st = STATUTS[order.status] || STATUTS.en_attente
+                          const st = statutCommande(order.status, order.order_type)
                           return (
                             <li
                               key={order.id_order || order.id}

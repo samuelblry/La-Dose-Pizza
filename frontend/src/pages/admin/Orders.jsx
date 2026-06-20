@@ -11,6 +11,20 @@ const STATUTS = {
   annulee: { label: 'Annulée', dot: 'bg-rouge', text: 'text-rouge' },
 }
 
+// Libellés adaptés au mode "sur place" (pas de livraison)
+const labelStatut = (status, type) => {
+  if (type === 'sur_place') {
+    if (status === 'en_livraison') return 'Prête'
+    if (status === 'livree') return 'Récupérée'
+  }
+  return STATUTS[status]?.label || STATUTS.en_attente.label
+}
+
+const statutCommande = (status, type) => ({
+  ...(STATUTS[status] || STATUTS.en_attente),
+  label: labelStatut(status, type),
+})
+
 const FILTRES = [
   { value: 'tous', label: 'Toutes' },
   { value: 'en_attente', label: 'En attente' },
@@ -107,8 +121,9 @@ export default function Orders() {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {liste.map((order) => {
-            const st = STATUTS[order.status] || STATUTS.en_attente
+            const st = statutCommande(order.status, order.order_type)
             const oid = order.id_order ?? order.id
+            const surPlace = order.order_type === 'sur_place'
             return (
               <div key={oid} className="rounded-3xl border border-white/10 bg-[#240400] p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -143,8 +158,8 @@ export default function Orders() {
                   >
                     <option value="en_attente">En attente</option>
                     <option value="en_preparation">En préparation</option>
-                    <option value="en_livraison">En livraison</option>
-                    <option value="livree">Livrée</option>
+                    <option value="en_livraison">{surPlace ? 'Prête' : 'En livraison'}</option>
+                    <option value="livree">{surPlace ? 'Récupérée' : 'Livrée'}</option>
                     <option value="annulee">Annulée</option>
                   </select>
                 </div>

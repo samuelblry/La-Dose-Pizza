@@ -25,7 +25,7 @@ export default function Footer() {
                   <>
                     <li><Link to="/panier" className="transition hover:text-ambre">Commander en ligne</Link></li>
                     <li><Link to="/reservation" className="transition hover:text-ambre">Réserver une table</Link></li>
-                    <li><Link to="/mon-compte" className="transition hover:text-ambre">Points de fidélité</Link></li>
+                    <li><Link to="/mon-compte" className="transition hover:text-ambre">Mon compte</Link></li>
                   </>
                 )}
               </ul>

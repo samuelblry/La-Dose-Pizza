@@ -51,7 +51,12 @@ class Address(models.Model):
 
 
 class LoginLog(models.Model):
-    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='login_logs')
+    # user peut être null si l'email saisi ne correspond à aucun compte
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, related_name='login_logs', null=True, blank=True)
+    # email saisi lors de la tentative (utile quand user est null)
+    email = models.CharField(max_length=255, blank=True)
+    # tentative réussie ou échouée
+    success = models.BooleanField(default=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     ip_address = models.CharField(max_length=50, blank=True, null=True)
 

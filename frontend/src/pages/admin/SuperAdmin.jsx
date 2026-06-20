@@ -449,11 +449,18 @@ function UsersTab({ token }) {
 }
 
 // ── Logs Tab ──────────────────────────────────────────────────────────────────
+const LOG_FILTRES = [
+  { id: 'tous', label: 'Tous' },
+  { id: 'success', label: 'Réussies' },
+  { id: 'fail', label: 'Échouées' },
+]
+
 function LogsTab({ token }) {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [erreur, setErreur] = useState('')
   const [filterEmp, setFilterEmp] = useState('')
+  const [filterStatut, setFilterStatut] = useState('tous')
 
   useEffect(() => {
     apiSuperAdminLogs(token)
@@ -463,6 +470,8 @@ function LogsTab({ token }) {
   }, [token])
 
   const filtered = logs.filter((l) => {
+    if (filterStatut === 'success' && !l.success) return false
+    if (filterStatut === 'fail' && l.success) return false
     if (!filterEmp) return true
     const q = filterEmp.toLowerCase()
     return l.user_email?.toLowerCase().includes(q) || l.user_name?.toLowerCase().includes(q)
@@ -470,18 +479,33 @@ function LogsTab({ token }) {
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-52">
           <Icon d={ICONS.search} className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-creme/30" />
           <input
             type="text"
-            placeholder="Filtrer par employé…"
+            placeholder="Filtrer par nom ou email…"
             value={filterEmp}
             onChange={(e) => setFilterEmp(e.target.value)}
             className="w-full rounded-full border border-white/10 bg-transparent py-2.5 pl-10 pr-4 font-poppins text-sm text-creme outline-none placeholder:text-creme/30 focus:border-ambre/50"
           />
         </div>
         <p className="font-poppins text-[0.75rem] text-creme/35">200 derniers logs</p>
+      </div>
+
+      {/* Filtre réussies / échouées */}
+      <div className="mb-5 flex gap-2">
+        {LOG_FILTRES.map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setFilterStatut(f.id)}
+            className={`rounded-full border px-3.5 py-2 font-poppins text-[0.72rem] transition ${
+              filterStatut === f.id ? 'border-ambre bg-ambre/15 text-ambre' : 'border-white/10 text-creme/60 hover:text-creme'
+            }`}
+          >
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {erreur && (
@@ -502,23 +526,28 @@ function LogsTab({ token }) {
         <div className="rounded-3xl border border-white/10 bg-[#240400] py-14 text-center">
           <Icon d={ICONS.clock} className="mx-auto mb-3 h-8 w-8 text-creme/20" />
           <p className="font-poppins text-sm text-creme/40">
-            {filterEmp ? 'Aucun log correspondant.' : 'Aucun log de connexion enregistré.'}
+            {filterEmp || filterStatut !== 'tous' ? 'Aucun log correspondant.' : 'Aucun log de connexion enregistré.'}
           </p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-white/10">
-          <div className="hidden grid-cols-[1fr_1.6fr_1.2fr_1fr] gap-4 border-b border-white/10 bg-[#1a0100] px-5 py-3 sm:grid">
-            {['Employé', 'Email', 'Date & Heure', 'IP'].map((h) => (
+          <div className="hidden grid-cols-[1fr_1.5fr_1.1fr_0.9fr_0.9fr] gap-4 border-b border-white/10 bg-[#1a0100] px-5 py-3 sm:grid">
+            {['Utilisateur', 'Email', 'Date & Heure', 'IP', 'Statut'].map((h) => (
               <p key={h} className="font-poppins text-[0.68rem] font-semibold uppercase tracking-wider text-creme/35">{h}</p>
             ))}
           </div>
           <div className="divide-y divide-white/5 bg-[#240400]">
             {filtered.map((log) => (
-              <div key={log.id} className="grid grid-cols-1 gap-1 px-5 py-3.5 transition hover:bg-white/5 sm:grid-cols-[1fr_1.6fr_1.2fr_1fr] sm:items-center sm:gap-4">
+              <div key={log.id} className="grid grid-cols-1 gap-1 px-5 py-3.5 transition hover:bg-white/5 sm:grid-cols-[1fr_1.5fr_1.1fr_0.9fr_0.9fr] sm:items-center sm:gap-4">
                 <p className="font-poppins text-sm font-semibold text-creme">{log.user_name}</p>
                 <p className="truncate font-poppins text-[0.74rem] text-creme/55">{log.user_email}</p>
                 <p className="font-poppins text-[0.74rem] text-creme/50">{fmtDateTime(log.timestamp)}</p>
                 <p className="font-mono text-[0.72rem] text-creme/35">{log.ip_address || '—'}</p>
+                <span className={`w-fit rounded-full px-2.5 py-1 font-poppins text-[0.66rem] font-semibold ${
+                  log.success ? 'bg-emerald-500/15 text-emerald-400' : 'bg-rouge/20 text-rouge'
+                }`}>
+                  {log.success ? 'Réussie' : 'Échouée'}
+                </span>
               </div>
             ))}
           </div>

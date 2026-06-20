@@ -1,9 +1,14 @@
 import { useCart } from '../context/CartContext'
+import { useAuth } from '../context/AuthContext'
 import { MEDIA_BASE } from '../services/api'
 
 export default function PizzaCard({ pizza }) {
   const { items, addItem, decItem, openCart } = useCart()
+  const { isAdmin, isSuperAdmin, isStaff } = useAuth()
+  // Le staff ne commande pas : bouton désactivé (mais la pizza reste affichée normalement)
+  const estStaff = isAdmin || isSuperAdmin || isStaff
   const dispo = pizza.is_available
+  const peutAjouter = dispo && !estStaff
   const pid = pizza.id ?? pizza.id_pizza
   // image_url est un chemin relatif Django (ex: "media/pizzas/xxx.jpg")
   const image = pizza.image_url ? `${MEDIA_BASE}/${pizza.image_url}` : null
@@ -67,10 +72,10 @@ export default function PizzaCard({ pizza }) {
         )}
 
         <div className="mt-auto pt-4">
-          {qty === 0 ? (
+          {qty === 0 || !peutAjouter ? (
             <button
               onClick={handleAdd}
-              disabled={!dispo}
+              disabled={!peutAjouter}
               className="flex h-11 w-full animate-pop items-center justify-center gap-2 rounded-full bg-rouge font-poppins text-[0.78rem] font-medium uppercase tracking-[0.12em] text-creme transition hover:bg-rouge/90 motion-reduce:animate-none disabled:cursor-not-allowed disabled:bg-dark/10 disabled:text-dark/30"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4">

@@ -57,13 +57,16 @@ def register(request):
 def login(request):
     email = request.data.get('email')
     password = request.data.get('password')
-    user = authenticate(request, username=email, password=password)
-    if not user:
-        return Response({'error': 'Identifiants invalides'}, status=status.HTTP_401_UNAUTHORIZED)
     ip = request.META.get('HTTP_X_FORWARDED_FOR') or request.META.get('REMOTE_ADDR', '')
     if ip and ',' in ip:
         ip = ip.split(',')[0].strip()
-    LoginLog.objects.create(user=user, ip_address=ip or None)
+    user = authenticate(request, username=email, password=password)
+    if not user:
+        # On garde une trace de la tentative échouée (user retrouvé si l'email existe)
+        echec_user = UserAccount.objects.filter(email=email).first() if email else None
+        LoginLog.objects.create(user=echec_user, email=email or '', success=False, ip_address=ip or None)
+        return Response({'error': 'Identifiants invalides'}, status=status.HTTP_401_UNAUTHORIZED)
+    LoginLog.objects.create(user=user, email=user.email, success=True, ip_address=ip or None)
     refresh = RefreshToken.for_user(user)
     return Response({
         'token': str(refresh.access_token),

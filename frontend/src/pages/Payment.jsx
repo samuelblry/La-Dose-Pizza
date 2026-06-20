@@ -118,14 +118,10 @@ function FormulairePaiement({ confirmationData }) {
         >
           <div className="mb-2 flex items-center justify-between border-b border-dark/10 pb-5">
             <h2 className="font-poppins text-lg font-semibold text-dark">Informations de paiement</h2>
-            {/* Logos cartes */}
-            <div className="flex items-center gap-2 text-dark/30">
+            {/* Icône carte bancaire */}
+            <div className="flex items-center text-dark/30">
               <svg viewBox="0 0 24 24" fill="currentColor" className="h-6 w-6">
                 <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
-              </svg>
-              {/* Logo Stripe */}
-              <svg viewBox="0 0 60 25" fill="currentColor" className="h-5 opacity-50">
-                <path d="M59.64 14.28h-8.06c.19 1.93 1.6 2.55 3.2 2.55 1.64 0 2.96-.37 4.05-.95v3.32a10.72 10.72 0 0 1-4.56.94c-4.01 0-6.83-2.5-6.83-7.48 0-4.19 2.39-7.52 6.3-7.52 3.92 0 5.96 3.28 5.96 7.5 0 .4-.04 1.26-.06 1.64zm-5.92-5.15c-1.03 0-2.17.73-2.17 2.58h4.25c0-1.85-1.07-2.58-2.08-2.58zM40.95 20.14c-2.18 0-3.46-.93-4.29-1.65L34.97 20H31V1.06L36.1 0l-.01 5.9c.86-.8 2.1-1.7 4.17-1.7 4.03 0 6.87 3.44 6.87 7.83 0 4.83-3.15 8.11-6.18 8.11zm-1.48-11.37c-1.15 0-1.83.42-2.31.98l.02 7.25c.46.52 1.12.96 2.29.96 1.76 0 2.96-1.9 2.96-4.6 0-2.57-1.23-4.59-2.96-4.59zM22.91 7.27V20h-5.17V7.27h5.17zM20.33 5.48C18.6 5.48 17 4.01 17 2.1 17 .37 18.6 0 20.33 0 22.06 0 23.7.37 23.7 2.1c0 1.91-1.64 3.38-3.37 3.38zm-8.4 11.01c1.09 0 2.14-.21 3.11-.64v3.74A10.55 10.55 0 0 1 11 20c-3.44 0-5.35-1.65-5.35-5.65V8.12H2.96V4.5h2.69V.72l5.14-.5V4.5h4.16v3.62h-4.16v5.79c0 1.38.66 2.04 1.94 2.04h.2z"/>
               </svg>
             </div>
           </div>

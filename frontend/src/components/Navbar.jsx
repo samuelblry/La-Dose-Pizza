@@ -48,6 +48,22 @@ export default function Navbar() {
         <nav className="hidden items-center gap-7 lg:flex">
           <DeskLink to="/menu">LA CARTE</DeskLink>
           {isLoggedIn && !isAdmin && !isSuperAdmin && !isStaff && <DeskLink to="/reservation">RESERVER</DeskLink>}
+          {isLoggedIn ? (
+            <DeskLink to={isSuperAdmin ? '/super-admin' : (isAdmin || isStaff) ? '/admin' : '/mon-compte'}>
+              {isSuperAdmin || isAdmin || isStaff ? 'DASHBOARD' : 'MON COMPTE'}
+            </DeskLink>
+          ) : (
+            <>
+              <DeskLink to="/connexion">CONNEXION</DeskLink>
+              <Link
+                to="/inscription"
+                className="rounded-full bg-rouge px-5 py-2.5 font-poppins text-sm font-medium text-creme transition hover:bg-rouge/90"
+              >
+                CREER UN COMPTE
+              </Link>
+            </>
+          )}
+          {/* Panier toujours en dernier, à l'extrême droite */}
           {!isAdmin && !isSuperAdmin && !isStaff && (
             <Link
               to="/panier"
@@ -65,23 +81,6 @@ export default function Navbar() {
                 </span>
               )}
             </Link>
-          )}
-          {isLoggedIn ? (
-            <>
-              <DeskLink to={isSuperAdmin ? '/super-admin' : (isAdmin || isStaff) ? '/admin' : '/mon-compte'}>
-                {isSuperAdmin || isAdmin || isStaff ? 'DASHBOARD' : 'MON COMPTE'}
-              </DeskLink>
-            </>
-          ) : (
-            <>
-              <DeskLink to="/connexion">CONNEXION</DeskLink>
-              <Link
-                to="/inscription"
-                className="rounded-full bg-rouge px-5 py-2.5 font-poppins text-sm font-medium text-creme transition hover:bg-rouge/90"
-              >
-                CREER UN COMPTE
-              </Link>
-            </>
           )}
         </nav>
       </header>

@@ -72,18 +72,24 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'is_admin', 'is_superadmin', 'last_login_at']
 
     def get_last_login_at(self, obj):
-        log = obj.login_logs.first()
+        log = obj.login_logs.filter(success=True).first()
         return log.timestamp.isoformat() if log else None
 
 
 class LoginLogSerializer(serializers.ModelSerializer):
-    user_email = serializers.CharField(source='user.email', read_only=True)
+    user_email = serializers.SerializerMethodField()
     user_name = serializers.SerializerMethodField()
 
     class Meta:
         model = LoginLog
-        fields = ['id', 'user_email', 'user_name', 'timestamp', 'ip_address']
+        fields = ['id', 'user_email', 'user_name', 'success', 'timestamp', 'ip_address']
+
+    def get_user_email(self, obj):
+        return obj.user.email if obj.user else (obj.email or '—')
 
     def get_user_name(self, obj):
-        name = f"{obj.user.first_name} {obj.user.last_name}".strip()
-        return name or obj.user.email
+        if obj.user:
+            name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+            return name or obj.user.email
+        # tentative sur un email inconnu
+        return obj.email or 'Inconnu'

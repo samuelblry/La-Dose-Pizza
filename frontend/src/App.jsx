@@ -31,11 +31,24 @@ function ScrollToTop() {
   return null
 }
 
-// Redirige vers /connexion si pas connecté, en mémorisant la page voulue
-function ProtectedRoute({ children }) {
-  const { isLoggedIn } = useAuth()
+// Destination par défaut du staff selon son rôle
+function staffHome(isSuperAdmin) {
+  return isSuperAdmin ? '/super-admin' : '/admin'
+}
+
+// Page client nécessitant d'être connecté ET de ne pas être staff
+function ClientRoute({ children }) {
+  const { isLoggedIn, isAdmin, isSuperAdmin, isStaff } = useAuth()
   const location = useLocation()
   if (!isLoggedIn) return <Navigate to="/connexion" state={{ from: location.pathname }} replace />
+  if (isAdmin || isSuperAdmin || isStaff) return <Navigate to={staffHome(isSuperAdmin)} replace />
+  return children
+}
+
+// Page client accessible aux invités mais interdite au staff (ex: panier)
+function GuestOrClientRoute({ children }) {
+  const { isAdmin, isSuperAdmin, isStaff } = useAuth()
+  if (isAdmin || isSuperAdmin || isStaff) return <Navigate to={staffHome(isSuperAdmin)} replace />
   return children
 }
 
@@ -68,15 +81,15 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/menu" element={<Menu />} />
-            <Route path="/panier" element={<Cart />} />
+            <Route path="/panier" element={<GuestOrClientRoute><Cart /></GuestOrClientRoute>} />
             <Route path="/connexion" element={<Login />} />
             <Route path="/inscription" element={<Register />} />
 
-            {/* Pages nécessitant d'être connecté */}
-            <Route path="/commander" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/paiement" element={<ProtectedRoute><Payment /></ProtectedRoute>} />
-            <Route path="/reservation" element={<ProtectedRoute><Reservation /></ProtectedRoute>} />
-            <Route path="/mon-compte" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+            {/* Pages client : connecté et non-staff */}
+            <Route path="/commander" element={<ClientRoute><Checkout /></ClientRoute>} />
+            <Route path="/paiement" element={<ClientRoute><Payment /></ClientRoute>} />
+            <Route path="/reservation" element={<ClientRoute><Reservation /></ClientRoute>} />
+            <Route path="/mon-compte" element={<ClientRoute><Account /></ClientRoute>} />
 
             {/* Pages admin — réservées au staff */}
             <Route path="/admin" element={<AdminRoute><Dashboard /></AdminRoute>} />

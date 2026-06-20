@@ -12,6 +12,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import CustomerOrder, OrderLine
 from .serializers import OrderSerializer
 from menu.models import Pizza, Drink, Dessert
+from users.models import Address
 from users.validators import validate_zip_code, validate_name, validate_street
 
 
@@ -148,6 +149,21 @@ def orders(request):
     if use_points > 0:
         request.user.loyalty_points -= use_points
         request.user.save()
+
+    # En livraison, on enregistre l'adresse saisie sur le profil du client
+    if order_type == 'livraison':
+        infos_adresse = {
+            'street': request.data.get('street', '').strip(),
+            'zip_code': request.data.get('zip_code', '').strip(),
+            'city': request.data.get('city', '').strip(),
+        }
+        adresse = request.user.addresses.first()
+        if adresse:
+            for k, v in infos_adresse.items():
+                setattr(adresse, k, v)
+            adresse.save()
+        else:
+            Address.objects.create(user=request.user, **infos_adresse)
 
     for l in lignes:
         OrderLine.objects.create(order=commande, **l)
