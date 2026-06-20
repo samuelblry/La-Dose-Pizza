@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"]
+# Migrations puis création du compte super admin s'il n'existe pas encore
+CMD ["sh", "-c", "python manage.py migrate && python manage.py shell -c \"from users.models import UserAccount; UserAccount.objects.filter(email='admin@ladose.fr').exists() or UserAccount.objects.create_superuser('admin@ladose.fr', 'MotDePasse123!')\" && python manage.py runserver 0.0.0.0:8000"]
