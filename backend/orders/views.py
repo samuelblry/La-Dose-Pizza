@@ -8,14 +8,30 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import CustomerOrder, OrderLine
 from .serializers import OrderSerializer
 from menu.models import Pizza, Drink, Dessert
+from users.validators import validate_zip_code, validate_name, validate_street
 
 
 # Frais de livraison fixés côté serveur (offerts sur place ou au-delà du seuil)
 FRAIS_LIVRAISON = Decimal('2.90')
 SEUIL_OFFERT = Decimal('25')
+
+
+# Vérifie l'adresse de livraison (présence + format)
+def _valider_adresse(data):
+    regles = (('street', validate_street), ('zip_code', validate_zip_code), ('city', validate_name))
+    for champ, validateur in regles:
+        valeur = (data.get(champ) or '').strip()
+        if not valeur:
+            return 'Adresse de livraison incomplète'
+        try:
+            validateur(valeur)
+        except DjangoValidationError as e:
+            return ' '.join(e.messages)
+    return None
 
 
 def _is_admin(request):
@@ -50,12 +66,26 @@ def orders(request):
         return Response({'error': 'Points de fidélité insuffisants'}, status=status.HTTP_400_BAD_REQUEST)
 
     order_type = request.data.get('order_type', 'livraison')
+    if order_type not in dict(CustomerOrder.TYPE_CHOICES):
+        return Response({'error': 'Type de commande invalide'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # En livraison, l'adresse doit être renseignée et au bon format
+    if order_type == 'livraison':
+        erreur_adresse = _valider_adresse(request.data)
+        if erreur_adresse:
+            return Response({'error': erreur_adresse}, status=status.HTTP_400_BAD_REQUEST)
 
     total = Decimal('0.00')
     lignes = []
 
     for item in items:
-        qte = item.get('quantity', 1)
+        # Quantité : entier strictement positif
+        try:
+            qte = int(item.get('quantity', 1))
+        except (ValueError, TypeError):
+            return Response({'error': 'Quantité invalide'}, status=status.HTTP_400_BAD_REQUEST)
+        if qte < 1:
+            return Response({'error': 'Quantité invalide'}, status=status.HTTP_400_BAD_REQUEST)
         pizza_id = item.get('pizza_id') or item.get('id_pizza')
         drink_id = item.get('drink_id')
         dessert_id = item.get('dessert_id')

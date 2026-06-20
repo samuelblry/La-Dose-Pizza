@@ -6,8 +6,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Sum
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import validate_email
 from .models import UserAccount, LoginLog
 from .serializers import AdminClientSerializer, EmployeeSerializer, LoginLogSerializer
+from .validators import validate_name
 
 
 def _check_superadmin(request):
@@ -15,8 +18,17 @@ def _check_superadmin(request):
 
 
 def _generate_temp_password():
-    chars = string.ascii_letters + string.digits
-    return ''.join(random.choices(chars, k=10))
+    # Conforme ANSSI : 14 caractères avec majuscule, minuscule, chiffre et spécial
+    specials = '!@#$%&*?'
+    base = [
+        random.choice(string.ascii_uppercase),
+        random.choice(string.ascii_lowercase),
+        random.choice(string.digits),
+        random.choice(specials),
+    ]
+    base += random.choices(string.ascii_letters + string.digits + specials, k=10)
+    random.shuffle(base)
+    return ''.join(base)
 
 
 @api_view(['GET'])
@@ -55,6 +67,14 @@ def superadmin_employees(request):
     is_admin = bool(request.data.get('is_admin', False))
     if not email:
         return Response({'error': 'Email requis'}, status=400)
+    try:
+        validate_email(email)
+        if first_name:
+            validate_name(first_name)
+        if last_name:
+            validate_name(last_name)
+    except DjangoValidationError as e:
+        return Response({'error': ' '.join(e.messages)}, status=400)
     if UserAccount.objects.filter(email=email).exists():
         return Response({'error': 'Email déjà utilisé'}, status=400)
 

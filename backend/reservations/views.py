@@ -25,6 +25,14 @@ def reservations(request):
     if not all([nb_personnes, date, heure]):
         return Response({'error': 'Champs manquants'}, status=400)
 
+    # On valide le nombre de convives avant toute requête (évite un crash ORM)
+    try:
+        nb_personnes = int(nb_personnes)
+    except (ValueError, TypeError):
+        return Response({'error': 'Nombre de convives invalide'}, status=400)
+    if nb_personnes < 1 or nb_personnes > 20:
+        return Response({'error': 'Le nombre de convives doit être entre 1 et 20'}, status=400)
+
     table_id = request.data.get('table_id')
 
     # trouver une table disponible avec capacité suffisante

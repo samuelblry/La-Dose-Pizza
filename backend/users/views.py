@@ -7,14 +7,38 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.validators import validate_email
 from .models import UserAccount, Address, LoginLog
 from .serializers import RegisterSerializer, UserProfileSerializer, AdminClientSerializer
+from .validators import validate_phone, validate_zip_code, validate_name, validate_street
 from orders.models import CustomerOrder
 
 
 # Limite les tentatives de connexion par IP
 class LoginRateThrottle(AnonRateThrottle):
     scope = 'login'
+
+
+# Valide le format des champs fournis ; renvoie un message d'erreur ou None
+def _valider_champs(data):
+    regles = {
+        'first_name': validate_name,
+        'last_name': validate_name,
+        'phone': validate_phone,
+        'street': validate_street,
+        'zip_code': validate_zip_code,
+        'city': validate_name,
+        'email': validate_email,
+    }
+    for champ, validateur in regles.items():
+        valeur = data.get(champ)
+        if valeur in (None, ''):
+            continue
+        try:
+            validateur(valeur)
+        except DjangoValidationError as e:
+            return ' '.join(e.messages)
+    return None
 
 
 @api_view(['POST'])
@@ -75,6 +99,11 @@ def me(request):
         if nouvel_email and nouvel_email != user.email and \
                 UserAccount.objects.filter(email=nouvel_email).exclude(pk=user.pk).exists():
             return Response({'error': 'Cet email est déjà utilisé'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Validation des champs modifiés (formats cohérents)
+        erreur_format = _valider_champs(request.data)
+        if erreur_format:
+            return Response({'error': erreur_format}, status=status.HTTP_400_BAD_REQUEST)
 
         champs_user = ('first_name', 'last_name', 'email', 'phone')
         for champ in champs_user:
@@ -158,6 +187,6 @@ def admin_stats(request):
 def admin_clients(request):
     if not _check_admin(request):
         return Response(status=status.HTTP_403_FORBIDDEN)
-    clients = UserAccount.objects.filter(is_admin=False)
+    clients = UserAccount.objects.filter(is_admin=False, is_staff=False)
     serializer = AdminClientSerializer(clients, many=True)
     return Response(serializer.data)

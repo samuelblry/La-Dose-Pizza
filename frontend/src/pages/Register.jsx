@@ -16,8 +16,10 @@ export default function Register() {
     const form = new FormData(e.target)
     const password = form.get('password')
 
-    if (password.length < 6) {
-      setErreurMdp('6 caractères minimum')
+    // Règles ANSSI : 12 caractères, majuscule, minuscule, chiffre et caractère spécial
+    const anssi = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/
+    if (!anssi.test(password)) {
+      setErreurMdp('12 caractères min. avec majuscule, minuscule, chiffre et caractère spécial')
       return
     }
     if (password !== form.get('confirm')) {
@@ -94,10 +96,10 @@ export default function Register() {
           name="password"
           autoComplete="new-password"
           placeholder="••••••••"
-          minLength={6}
+          minLength={12}
           required
           error={erreurMdp}
-          hint={erreurMdp ? '' : '6 caractères minimum'}
+          hint={erreurMdp ? '' : '12 car. min. (Aa, chiffre, spécial)'}
         />
         <PasswordField
           label="Confirmer le mot de passe"

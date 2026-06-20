@@ -592,7 +592,9 @@ function FormMotDePasse({ token, onCancel, onSaved }) {
     const current = f.get('current_password')
     const next = f.get('new_password')
     const confirm = f.get('confirm_password')
-    if (next.length < 6) return setErreur('Le nouveau mot de passe doit faire au moins 6 caractères.')
+    // Règles ANSSI : 12 caractères, majuscule, minuscule, chiffre et caractère spécial
+    const anssi = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{12,}$/
+    if (!anssi.test(next)) return setErreur('Mot de passe : 12 caractères min. avec majuscule, minuscule, chiffre et caractère spécial.')
     if (next !== confirm) return setErreur('Les mots de passe ne correspondent pas.')
     setSaving(true)
     try {
