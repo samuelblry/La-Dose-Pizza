@@ -121,7 +121,7 @@ Vite démarre sur `http://localhost:5173`.
 
 | Rôle | Email | Mot de passe |
 |------|-------|-------------|
-| Super Admin | *(créé via `python manage.py createsuperuser`)* | — |
+| Super Admin | admin@ladose.fr | MotDePasse123! |
 | Admin / Employé | *(créé depuis la page Super Admin)* | mot de passe temporaire affiché à la création |
 | Client | *(inscription via `/inscription`)* | — |
 
@@ -173,9 +173,12 @@ Base URL : `http://localhost:8000/api/`
 
 ## Hébergement
 
-| Service | Usage |
-|---------|-------|
-| Vercel | Frontend (React/Vite) — déploiement automatique depuis GitHub |
-| Railway ou Render | Backend Django + PostgreSQL |
+Le projet est déployé sur **Render** (tier gratuit) :
 
-> Les URLs de production seront ajoutées après déploiement.
+| Service | Type | URL |
+|---------|------|-----|
+| Frontend | Static Site (Vite build) | https://la-dose-pizza-front.onrender.com |
+| Backend | Web Service Docker | https://la-dose-pizza.onrender.com |
+| Base de données | PostgreSQL managé Render | *(interne)* |
+
+> ⚠️ Sur le tier gratuit, le backend se met en veille après inactivité : la première requête peut prendre ~60 s à répondre.
